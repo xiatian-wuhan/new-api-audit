@@ -4,6 +4,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"errors"
+	"slices"
 	"sort"
 	"time"
 
@@ -16,22 +17,44 @@ import (
 type TaskPluginChannelRef struct {
 	Id   int    `json:"id"`
 	Name string `json:"name"`
+	Type int    `json:"type"`
 }
 
 func GetTaskPluginUsage(key string) ([]TaskPluginChannelRef, int64, error) {
 	var channels []Channel
-	if err := DB.Where("type = ? AND status = ?", constant.ChannelTypeTaskPlugin, common.ChannelStatusEnabled).Find(&channels).Error; err != nil {
+	boundTypes := []int{constant.ChannelTypeTaskPlugin, constant.ChannelTypeNewAPI}
+	if err := DB.Where("type IN ? AND status = ?", boundTypes, common.ChannelStatusEnabled).Find(&channels).Error; err != nil {
 		return nil, 0, err
 	}
 	refs := make([]TaskPluginChannelRef, 0)
 	for _, channel := range channels {
-		if channel.GetSetting().TaskPluginKey == key {
-			refs = append(refs, TaskPluginChannelRef{Id: channel.Id, Name: channel.Name})
+		if channel.GetSetting().BindsTaskPlugin(key) {
+			refs = append(refs, TaskPluginChannelRef{Id: channel.Id, Name: channel.Name, Type: channel.Type})
 		}
 	}
 	var inFlight int64
 	err := DB.Model(&Task{}).Where("platform = ? AND status NOT IN ?", key, []TaskStatus{TaskStatusSuccess, TaskStatusFailure}).Count(&inFlight).Error
 	return refs, inFlight, err
+}
+
+// UnbindTaskPlugin removes one plugin from a channel's bindings and reports
+// whether the channel changed. A New API gateway channel keeps serving its other
+// plugins and its ordinary traffic.
+func UnbindTaskPlugin(channelID int, key string) (bool, error) {
+	channel, err := GetChannelById(channelID, false)
+	if err != nil {
+		return false, err
+	}
+	setting := channel.GetSetting()
+	if !setting.BindsTaskPlugin(key) {
+		return false, nil
+	}
+	if setting.TaskPluginKey == key {
+		setting.TaskPluginKey = ""
+	}
+	setting.TaskExtendPluginKeys = slices.DeleteFunc(setting.TaskExtendPluginKeys, func(bound string) bool { return bound == key })
+	channel.SetSetting(setting)
+	return true, DB.Model(&Channel{}).Where("id = ?", channelID).Update("setting", channel.Setting).Error
 }
 
 type TaskPlugin struct {
@@ -41,10 +64,23 @@ type TaskPlugin struct {
 	Version    string `json:"version" gorm:"size:64;not null;uniqueIndex:uk_task_plugin_key_version,priority:2"`
 	Source     string `json:"source" gorm:"type:text;not null"`
 	SourceHash string `json:"source_hash" gorm:"size:64;not null"`
-	Enabled    bool   `json:"enabled" gorm:"not null"`
-	Active     bool   `json:"active" gorm:"not null;index"`
-	CreatedAt  int64  `json:"created_at" gorm:"not null"`
-	Remark     string `json:"remark" gorm:"type:text"`
+	// Icon is the plugin logo shipped as a sidecar icon.svg / icon.png next to
+	// plugin.js, stored as a data URI so one column carries both the media
+	// type and the bytes. It never travels inside list or detail JSON; the UI
+	// loads it through GET /api/plugin/task/:key/icon. size matches the
+	// 512 KiB icon cap and makes GORM emit mediumtext on MySQL (a bare TEXT
+	// column there holds only 64 KiB), varchar(524288) on PostgreSQL, and text
+	// on SQLite.
+	Icon      string `json:"-" gorm:"size:524288"`
+	Enabled   bool   `json:"enabled" gorm:"not null"`
+	Active    bool   `json:"active" gorm:"not null;index"`
+	CreatedAt int64  `json:"created_at" gorm:"not null"`
+	Remark    string `json:"remark" gorm:"type:text"`
+}
+
+// HasIcon reports whether this version ships a logo.
+func (plugin TaskPlugin) HasIcon() bool {
+	return plugin.Icon != ""
 }
 
 func SaveTaskPlugin(plugin *TaskPlugin) error {
@@ -55,7 +91,12 @@ func SaveTaskPlugin(plugin *TaskPlugin) error {
 			if existing.SourceHash != plugin.SourceHash {
 				return errors.New("plugin key and version already exist with different source")
 			}
-			if err = tx.Model(&existing).Updates(map[string]any{"enabled": plugin.Enabled, "remark": plugin.Remark}).Error; err != nil {
+			updates := map[string]any{"enabled": plugin.Enabled, "remark": plugin.Remark}
+			if plugin.Icon != "" {
+				updates["icon"] = plugin.Icon
+				existing.Icon = plugin.Icon
+			}
+			if err = tx.Model(&existing).Updates(updates).Error; err != nil {
 				return err
 			}
 			existing.Enabled = plugin.Enabled
