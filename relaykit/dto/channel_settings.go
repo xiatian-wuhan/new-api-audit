@@ -32,6 +32,11 @@ type ChannelSettings struct {
 	// HTTP2ConnectionShards spreads HTTP/2 traffic across N independent transports
 	// (1-8). Zero/unset means 1. Ignored when HTTPProtocol is "http1".
 	HTTP2ConnectionShards int `json:"http2_connection_shards,omitempty"`
+	// AuditEnabled opts this channel into the token-audit reporting hook. When
+	// true (and the global AUDIT_ENABLED env switch is on), request and usage
+	// events of requests served by this channel are asynchronously reported to
+	// the token-audit service. Defaults to false.
+	AuditEnabled bool `json:"audit_enabled,omitempty"`
 }
 
 // BindsTaskPlugin reports whether the channel is bound to the task plugin,

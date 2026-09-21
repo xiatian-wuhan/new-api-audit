@@ -5853,6 +5853,8 @@
     "These values come from the source index and are shown for review only. The gateway admits the plugin based on the metadata compiled from its source.": "Các giá trị này lấy từ chỉ mục của nguồn và chỉ để bạn xem xét. Cổng quyết định chấp nhận plugin dựa trên metadata biên dịch từ mã nguồn của nó.",
     "Thinking Suffix Adapter": "Adapter hậu tố thinking",
     "Thinking to Content": "Suy nghĩ thành Nội dung",
+    "Audit Enabled": "Bật kiểm toán",
+    "Report requests and token usage of this channel to the token-audit service": "Báo cáo yêu cầu và mức sử dụng token của kênh này đến dịch vụ kiểm toán token-audit",
     "Thinking...": "Đang suy nghĩ...",
     "Third-party": "Bên thứ ba",
     "Third-party — use at your own risk": "Bên thứ ba — tự chịu rủi ro",

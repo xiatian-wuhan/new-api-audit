@@ -125,27 +125,9 @@ func Relay(c *gin.Context, relayFormat types.RelayFormat) {
 		return
 	}
 
-	if audit.EnabledForToken(c.GetString("token_name")) {
-		var promptText string
-		if meta := request.GetTokenCountMeta(); meta != nil {
-			promptText = meta.CombineText
-		}
-		audit.EnqueueRequest(audit.RequestEvent{
-			RequestId:     requestId,
-			CreatedAt:     time.Now().UTC().Format(time.RFC3339Nano),
-			UserId:        relayInfo.UserId,
-			Username:      c.GetString("username"),
-			TokenId:       relayInfo.TokenId,
-			TokenName:     c.GetString("token_name"),
-			ModelName:     relayInfo.OriginModelName,
-			RequestPath:   c.Request.URL.Path,
-			RelayFormat:   string(relayFormat),
-			IsStream:      relayInfo.IsStream,
-			PromptHash:    audit.HashText(promptText),
-			PromptPreview: audit.PreviewText(promptText, 500),
-			PromptText:    promptText,
-		})
-	}
+	// audit hook: the request event is enqueued after a channel is selected
+	// (inside the retry loop below) so the channel-level audit switch in
+	// ChannelSettings can gate the report.
 
 	defer func() {
 		recovered := recover()
@@ -178,6 +160,10 @@ func Relay(c *gin.Context, relayFormat types.RelayFormat) {
 	relayInfo.RetryIndex = 0
 	relayInfo.LastError = nil
 
+	// audit hook: report the request once, attributed to the first audited
+	// channel that actually serves an attempt.
+	requestEventEnqueued := false
+
 	for ; retryParam.GetRetry() <= common.RetryTimes; retryParam.IncreaseRetry() {
 		relayInfo.StreamStatus = nil
 		relayInfo.PerformanceBusinessRejection = false
@@ -190,6 +176,36 @@ func Relay(c *gin.Context, relayFormat types.RelayFormat) {
 			break
 		}
 		service.AppendUsedChannel(c, channel.Id)
+
+		// audit hook: channel-level switch + global token exclusion gate.
+		// The channel object returned by getChannel may be a context-key stub
+		// without Setting populated (distributor pre-selection path), so the
+		// switch is read from the channel cache by id instead.
+		if !requestEventEnqueued && audit.EnabledForToken(c.GetString("token_name")) {
+			if ch, err := model.CacheGetChannel(channel.Id); err == nil && ch.GetSetting().AuditEnabled {
+				requestEventEnqueued = true
+				var promptText string
+				if meta := request.GetTokenCountMeta(); meta != nil {
+					promptText = meta.CombineText
+				}
+				audit.EnqueueRequest(audit.RequestEvent{
+					RequestId:     requestId,
+					CreatedAt:     time.Now().UTC().Format(time.RFC3339Nano),
+					UserId:        relayInfo.UserId,
+					Username:      c.GetString("username"),
+					TokenId:       relayInfo.TokenId,
+					TokenName:     c.GetString("token_name"),
+					ModelName:     relayInfo.OriginModelName,
+					RequestPath:   c.Request.URL.Path,
+					RelayFormat:   string(relayFormat),
+					IsStream:      relayInfo.IsStream,
+					PromptHash:    audit.HashText(promptText),
+					PromptPreview: audit.PreviewText(promptText, 500),
+					PromptText:    promptText,
+				})
+			}
+		}
+
 		if billingErr := service.PrepareTieredBillingForSelectedGroup(c, relayInfo); billingErr != nil {
 			newAPIError = billingErr
 			break

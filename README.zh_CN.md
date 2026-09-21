@@ -36,8 +36,10 @@
 | 文件 | 作用 |
 | --- | --- |
 | `audit/sender.go` | 新增审计事件 sender，负责读取环境变量、HMAC 签名、非阻塞队列、异步 HTTP 上报 |
-| `controller/relay.go` | 在请求解析后采集 request 事件，包括用户、token、模型、路径、格式、prompt hash、prompt preview 和完整 prompt |
+| `controller/relay.go` | 在渠道选定后采集 request 事件，包括用户、token、模型、路径、格式、prompt hash、prompt preview 和完整 prompt |
 | `model/log.go` | 在消费日志记录后采集 usage 事件，包括 prompt tokens、completion tokens、quota、channel、group、耗时、上游 request id |
+
+除代码 hook 外，还扩展了渠道数据模型（`relaykit/dto/channel_settings.go` 的 `audit_enabled` 字段）和前端渠道编辑界面，支持按渠道开启审计。
 
 New-API 会向审计服务发送两类事件：
 
@@ -58,6 +60,21 @@ X-Audit-Signature
 ```text
 hex(hmac_sha256(timestamp + "." + raw_body, AUDIT_SECRET))
 ```
+
+## 渠道级审计开关
+
+审计支持按渠道开启，默认关闭。在管理后台「渠道管理 → 编辑渠道 → 渠道额外设置」中打开「启用审计」开关即可。上报条件为以下两项同时满足：
+
+- 服务器环境变量 `AUDIT_ENABLED=true`（总闸，`AUDIT_ENDPOINT`/`AUDIT_SECRET` 配置完整）。
+- 该渠道的「启用审计」开关已打开。
+
+开关行为细节：
+
+- request 事件在渠道选定后上报，归属该请求**首个实际尝试服务的已开启审计渠道**；重试切换渠道不会重复上报。
+- usage 事件按消费日志中的渠道 ID 判断开关（读渠道内存缓存）。
+- token 排除列表（`AUDIT_EXCLUDED_TOKEN_NAMES`）仍然生效，与渠道开关是 AND 关系。
+- 未开启审计的渠道，prompt 内容不会构建、不会离开网关。
+- 多节点部署下，渠道开关修改通过渠道缓存定时同步（`SYNC_FREQUENCY`，默认 60 秒）传播到其他节点。
 
 ## 为什么要这样做
 
@@ -216,7 +233,7 @@ docker build -t new-api-audit:audit-hook .
 
 本仓库保留 New-API 的原始能力和许可证，仅增加企业内部审计所需的最小 hook。
 
-当前代码基线为上游 `v1.0.0-rc.22`。New-API 可通过 `LOG_SQL_DSN` 单独使用 ClickHouse 保存网关日志；独立 `token-audit` 服务仍使用自己的 SQLite 审计库，两者职责不同。
+当前代码基线为上游 `v1.0.0-rc.39`（分支 `upgrade/upstream-v1.0.0-rc.39`）。New-API 可通过 `LOG_SQL_DSN` 单独使用 ClickHouse 保存网关日志；独立 `token-audit` 服务仍使用自己的 SQLite 审计库，两者职责不同。
 
 原项目文档：
 

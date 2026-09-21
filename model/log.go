@@ -403,6 +403,10 @@ func RecordConsumeLog(c *gin.Context, userId int, params RecordConsumeLogParams)
 }
 
 func enqueueAuditUsage(c *gin.Context, userId int, params RecordConsumeLogParams) {
+	// audit hook: only report usage for channels with the audit switch on.
+	if channel, err := CacheGetChannel(params.ChannelId); err != nil || !channel.GetSetting().AuditEnabled {
+		return
+	}
 	audit.EnqueueUsage(audit.UsageEvent{
 		RequestId:         c.GetString(common.RequestIdKey),
 		CreatedAt:         time.Now().UTC().Format(time.RFC3339Nano),

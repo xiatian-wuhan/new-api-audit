@@ -5853,6 +5853,8 @@
     "These values come from the source index and are shown for review only. The gateway admits the plugin based on the metadata compiled from its source.": "These values come from the source index and are shown for review only. The gateway admits the plugin based on the metadata compiled from its source.",
     "Thinking Suffix Adapter": "Thinking Suffix Adapter",
     "Thinking to Content": "Thinking to Content",
+    "Audit Enabled": "Audit Enabled",
+    "Report requests and token usage of this channel to the token-audit service": "Report requests and token usage of this channel to the token-audit service",
     "Thinking...": "Thinking...",
     "Third-party": "Third-party",
     "Third-party — use at your own risk": "Third-party — use at your own risk",

@@ -5853,6 +5853,8 @@
     "These values come from the source index and are shown for review only. The gateway admits the plugin based on the metadata compiled from its source.": "Ces valeurs proviennent de l’index de la source et sont affichées à titre d’examen uniquement. La passerelle admet le plugin d’après les métadonnées compilées depuis son code.",
     "Thinking Suffix Adapter": "Adaptateur de suffixe thinking",
     "Thinking to Content": "Réflexion vers Contenu",
+    "Audit Enabled": "Audit activé",
+    "Report requests and token usage of this channel to the token-audit service": "Signaler les requêtes et l'utilisation de tokens de ce canal au service d'audit token-audit",
     "Thinking...": "Réflexion...",
     "Third-party": "Tiers",
     "Third-party — use at your own risk": "Tiers — à vos risques et périls",

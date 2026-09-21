@@ -5853,6 +5853,8 @@
     "These values come from the source index and are shown for review only. The gateway admits the plugin based on the metadata compiled from its source.": "這些值來自來源索引，僅供審查參考。閘道的准入判定只依據從原始碼編譯出的真實中介資料。",
     "Thinking Suffix Adapter": "思考後綴配接器",
     "Thinking to Content": "思維到內容",
+    "Audit Enabled": "啟用審計",
+    "Report requests and token usage of this channel to the token-audit service": "將該渠道的請求與 Token 用量上報給 token-audit 審計服務",
     "Thinking...": "思考中...",
     "Third-party": "第三方",
     "Third-party — use at your own risk": "第三方 — 風險自負",

@@ -1922,6 +1922,32 @@ export function ChannelMutateDrawer({
     />
   )
 
+  const auditFields = (
+    <FormField
+      control={form.control}
+      name='audit_enabled'
+      render={({ field }) => (
+        <FormItem className='flex items-center justify-between px-4 py-3'>
+          <div className='space-y-0.5'>
+            <FormLabel>{t('Audit Enabled')}</FormLabel>
+            <FormDescription>
+              {t(
+                'Report requests and token usage of this channel to the token-audit service'
+              )}
+            </FormDescription>
+          </div>
+          <FormControl>
+            <Switch
+              disabled={sensitiveLocked}
+              checked={field.value}
+              onCheckedChange={field.onChange}
+            />
+          </FormControl>
+        </FormItem>
+      )}
+    />
+  )
+
   const taskPollingFields = (
     <FormField
       control={form.control}
@@ -4690,6 +4716,7 @@ export function ChannelMutateDrawer({
                 {proxyFields}
                 {httpProtocolFields}
                 {httpShardsFields}
+                {auditFields}
               </fieldset>
             </div>
             {upstreamModelDetectionFields}
