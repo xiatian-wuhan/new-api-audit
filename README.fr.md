@@ -2,227 +2,339 @@
 
 ![new-api](/web/public/logo.png)
 
-# New API Audit Fork
+# New API
 
-**Fork minimal de New-API pour l'audit d'utilisation des tokens**
+**Une passerelle IA pour les modèles, les applications et les agents**
 
 <p align="center">
   <a href="./README.zh_CN.md">简体中文</a> |
-  <a href="./README.en.md">English</a> |
   <a href="./README.zh_TW.md">繁體中文</a> |
+  <a href="./README.md">English</a> |
   <strong>Français</strong> |
   <a href="./README.ja.md">日本語</a>
 </p>
 
+<p align="center">
+  <a href="https://raw.githubusercontent.com/Calcium-Ion/new-api/main/LICENSE">
+    <img src="https://img.shields.io/github/license/Calcium-Ion/new-api?color=brightgreen" alt="licence">
+  </a><!--
+  --><a href="https://github.com/Calcium-Ion/new-api/releases/latest">
+    <img src="https://img.shields.io/github/v/release/Calcium-Ion/new-api?color=brightgreen&include_prereleases" alt="version">
+  </a><!--
+  --><a href="https://hub.docker.com/r/CalciumIon/new-api">
+    <img src="https://img.shields.io/badge/docker-dockerHub-blue" alt="docker">
+  </a>
+  <a href="https://atomgit.com/QuantumNous/new-api" target="_blank">
+    <img alt="AtomGit G-Star" src="https://atomgit.com/QuantumNous/new-api/star/badge.svg"/>
+  </a>
+</p>
+
+<p align="center">
+  <a href="https://trendshift.io/repositories/20180" target="_blank">
+    <img src="https://trendshift.io/api/badge/repositories/20180" alt="QuantumNous%2Fnew-api | Trendshift" style="width: 250px; height: 55px;" width="250" height="55"/>
+  </a>
+  <br>
+  <a href="https://hellogithub.com/repository/QuantumNous/new-api" target="_blank">
+    <img src="https://api.hellogithub.com/v1/widgets/recommend.svg?rid=539ac4217e69431684ad4a0bab768811&claim_uid=tbFPfKIDHpc4TzR" alt="Featured｜HelloGitHub" style="width: 250px; height: 54px;" width="250" height="54" />
+  </a><!--
+  -->
+  <a href="https://atomgit.com/QuantumNous/new-api" target="_blank">
+    <img alt="AtomGit G-Star" src="https://atomgit.com/QuantumNous/new-api/star/new_badge.svg" width="250" height="55" />
+  </a>
+</p>
+
+<p align="center">
+  <a href="#capabilities">Fonctionnalités</a> •
+  <a href="#quick-start">Démarrage rapide</a> •
+  <a href="#deployment">Déploiement</a> •
+  <a href="#development">Développement</a> •
+  <a href="#documentation">Documentation</a>
+</p>
+
 </div>
 
-## Objectif
+---
 
-Ce dépôt est un fork orienté audit de [QuantumNous/new-api](https://github.com/QuantumNous/new-api).
+## 📝 Description du projet
 
-Il ne réimplémente pas la passerelle et ne modifie pas la logique métier principale de New-API. Il ajoute uniquement quelques hooks de collecte pour envoyer, de façon asynchrone, les métadonnées de requête déjà analysées par New-API et l'utilisation de tokens après règlement vers un service indépendant [`token-audit`](https://github.com/Bigduang/new-api-audit-for-company).
+New API est une passerelle IA auto-hébergée pour les applications, les agents et les équipes. Connectez vos fournisseurs de modèles, exposez une API commune à vos clients et gérez le routage, les accès, les usages et les coûts depuis une même console.
 
-L'objectif est de répondre aux besoins d'audit internes en entreprise :
+Utilisez-la pour partager des accès autorisés au sein d'une équipe, changer de fournisseur sans reconfigurer chaque client ou exploiter un service privé multi-modèles. Les fournisseurs incluent OpenAI, Anthropic, Google Gemini, Azure OpenAI, AWS Bedrock, Vertex AI, DeepSeek, Qwen et d'autres services compatibles.
 
-- Statistiques de consommation par utilisateur et par token sur une période donnée.
-- Classification des requêtes : développement, débogage, architecture, opérations, documentation, revue de code, analyse de données, usage potentiellement non professionnel, autre.
-- Traçabilité des requêtes suspectes ou incertaines vers l'utilisateur, le token, le modèle, l'heure, les tokens consommés et un aperçu du prompt.
-- Coût de mise à niveau New-API limité, en gardant classification, rapports, revue manuelle et notifications WeCom dans le service d'audit séparé.
+> [!IMPORTANT]
+> - Ce projet est exclusivement destiné aux scénarios de passerelle API d'IA légalement autorisés, d'authentification organisationnelle, de gestion multi-modèles, d'analyse d'utilisation, de comptabilisation des coûts et de déploiement privé.
+> - Les utilisateurs doivent obtenir légalement les clés API, comptes, services de modèles et autorisations d'interface en amont, et doivent respecter les conditions d'utilisation en amont et les lois et réglementations applicables.
+> - Les utilisateurs doivent s'assurer que leur utilisation est conforme aux conditions d'utilisation en amont et aux lois et réglementations applicables.
+> - Lors de la fourniture de services d'IA générative au public, les utilisateurs doivent se conformer aux exigences réglementaires applicables et remplir toutes les obligations d'enregistrement, de licence, de sécurité du contenu, de vérification d'identité, de conservation des journaux, de fiscalité et d'autorisation en amont requises par leur juridiction.
 
-## Ce que ce fork modifie
+<!-- -->
 
-Les changements personnalisés sont limités à trois fichiers :
+> [!WARNING]
+> Lorsque vous exploitez ce projet en tant que service public d'IA générative ou service de revente d'API, les utilisateurs doivent d'abord remplir toutes les obligations requises en matière d'enregistrement, de licence, de sécurité du contenu, de vérification d'identité, de conservation des journaux, de fiscalité, de paiement et d'autorisation en amont.
 
-| Fichier | Rôle |
+---
+
+## 🤝 Partenaires de confiance
+
+<p align="center">
+  <em>Sans ordre particulier</em>
+</p>
+
+<p align="center">
+  <a href="https://www.cherry-ai.com/" target="_blank">
+    <img src="./docs/images/cherry-studio.png" alt="Cherry Studio" height="80" />
+  </a><!--
+  --><a href="https://github.com/iOfficeAI/AionUi/" target="_blank">
+    <img src="./docs/images/aionui.png" alt="Aion UI" height="80" />
+  </a><!--
+  --><a href="https://bda.pku.edu.cn/" target="_blank">
+    <img src="./docs/images/pku.png" alt="Université de Pékin" height="80" />
+  </a><!--
+  --><a href="https://www.aliyun.com/" target="_blank">
+    <img src="./docs/images/aliyun.png" alt="Alibaba Cloud" height="80" />
+  </a><!--
+  --><a href="https://io.net/" target="_blank">
+    <img src="./docs/images/io-net.png" alt="IO.NET" height="80" />
+  </a>
+</p>
+
+---
+
+## 🙏 Remerciements spéciaux
+
+<p align="center">
+  <a href="https://www.jetbrains.com/?from=new-api" target="_blank">
+    <img src="https://resources.jetbrains.com/storage/products/company/brand/logos/jb_beam.png" alt="JetBrains Logo" width="120" />
+  </a>
+</p>
+
+<p align="center">
+  <strong>Merci à <a href="https://www.jetbrains.com/?from=new-api">JetBrains</a> pour avoir fourni une licence de développement open-source gratuite pour ce projet</strong>
+</p>
+
+---
+
+<a id="capabilities"></a>
+
+## Fonctionnalités
+
+| Domaine | Possibilités |
 | --- | --- |
-| `audit/sender.go` | Ajoute l'émetteur d'événements d'audit : configuration, signature HMAC, file non bloquante, envoi HTTP asynchrone |
-| `controller/relay.go` | Envoie les événements request après l'analyse de la requête : utilisateur, token, modèle, chemin, format, hash du prompt, aperçu et prompt complet |
-| `model/log.go` | Envoie les événements usage après le journal de consommation : prompt tokens, completion tokens, quota, channel, group, durée, upstream request id |
+| Accès aux modèles | OpenAI Chat Completions, Responses, Anthropic Messages et Gemini ; streaming, outils, raisonnement et entrées multimodales selon le fournisseur |
+| Routage | Correspondance des noms de modèles, priorités et poids des canaux, tentatives supplémentaires, affinité de canal et gestion de plusieurs clés |
+| Usages et coûts | Quotas, abonnements, journaux d'utilisation, comptabilisation du cache et tarification par paliers fondée sur des expressions |
+| Contrôle d'accès | Utilisateurs, groupes, permissions fines et restrictions des clés API ; OAuth/OIDC, clés d'accès, double authentification et gestion des sessions |
+| Tâches asynchrones | Extensions JavaScript pour les API de tâches d'image, de vidéo et autres, avec suivi d'état et récupération des résultats |
+| Console web | Gestion des canaux et modèles, journaux d'utilisation et d'audit, playground ; interface en anglais, chinois simplifié et traditionnel, français, japonais, russe et vietnamien |
 
-New-API envoie deux types d'événements au service d'audit :
+### Protocoles et points d'accès
 
-```text
-POST /internal/new-api/audit/request
-POST /internal/new-api/audit/usage
+| Interface | Points d'accès courants |
+| --- | --- |
+| OpenAI Chat / Responses | `POST /v1/chat/completions`, `POST /v1/responses` |
+| Anthropic Messages | `POST /v1/messages` |
+| Gemini | `POST /v1beta/models/{model}:generateContent`, `POST /v1beta/models/{model}:streamGenerateContent` |
+| Realtime / Responses WebSocket | `GET /v1/realtime`, `GET /v1/responses` (mise à niveau WebSocket) |
+| Images / audio | `/v1/images/generations`, `/v1/images/edits`, `/v1/audio/speech`, `/v1/audio/transcriptions`, `/v1/audio/translations` |
+| Embeddings / rerank | `POST /v1/embeddings`, `POST /v1/rerank` |
+| Extensions de tâches | `POST /v1/tasks/{pluginKey}`, `GET /v1/tasks/{taskId}`, ainsi que les routes déclarées par chaque extension |
+
+[RelayKit](./relaykit/README.md) convertit les requêtes, réponses et flux entre les quatre protocoles textuels. Les capacités disponibles dépendent du canal, du modèle amont et du chemin de conversion ; certains outils et champs propres à un protocole ne sont pas entièrement transposables. WebSocket nécessite également un fournisseur et une configuration de canal compatibles.
+
+Ce README décrit le code source actuel. Consultez les notes de la version que vous déployez.
+
+<a id="quick-start"></a>
+
+## Démarrage rapide
+
+### Essai local avec Docker
+
+Cette commande démarre une instance SQLite accessible uniquement depuis la machine locale :
+
+```bash
+mkdir -p data
+docker run --name new-api -d --restart unless-stopped \
+  -p 127.0.0.1:3000:3000 \
+  -e TZ=Asia/Shanghai \
+  -v "$(pwd)/data:/data" \
+  calciumion/new-api:latest
 ```
 
-Chaque requête contient les en-têtes de signature :
+Ouvrez [http://localhost:3000](http://localhost:3000) et suivez l'assistant pour créer le compte administrateur. Le répertoire `data` conserve la base SQLite lors du remplacement du conteneur.
 
-```text
-X-Audit-Timestamp
-X-Audit-Signature
+### Première requête
+
+1. Ajoutez un canal avec votre clé API amont, ses modèles et son groupe, puis lancez un test du canal.
+2. Configurez les prix des modèles et vérifiez que l'utilisateur dispose d'un quota ou d'un abonnement valide.
+3. Créez une clé API dans la console, autorisée à accéder au même groupe et aux mêmes modèles.
+4. Pour un client compatible OpenAI, utilisez `http://localhost:3000/v1` comme URL de base et la **clé émise par New API**.
+
+Définissez `NEW_API_KEY` dans votre shell avec cette clé, puis listez les modèles accessibles :
+
+```bash
+curl --fail-with-body http://localhost:3000/v1/models \
+  -H "Authorization: Bearer ${NEW_API_KEY}"
 ```
 
-Algorithme de signature :
+Appelez ensuite Responses en remplaçant `your-enabled-model` par un modèle activé qui prend en charge cette interface :
 
-```text
-hex(hmac_sha256(timestamp + "." + raw_body, AUDIT_SECRET))
+```bash
+curl --fail-with-body http://localhost:3000/v1/responses \
+  -H "Authorization: Bearer ${NEW_API_KEY}" \
+  -H "Content-Type: application/json" \
+  -d '{"model":"your-enabled-model","input":"Hello!"}'
 ```
 
-## Pourquoi cette approche
-
-Les journaux et la base de données existants de New-API sont adaptés à la comptabilité d'usage, mais insuffisants pour auditer l'objectif professionnel des requêtes :
-
-- La table `logs` contient l'utilisateur, le token, le modèle, le quota, les compteurs de tokens et `request_id`, mais pas le contenu du prompt.
-- L'analyse de Docker logs par expressions régulières est fragile avec plusieurs noeuds, la rotation des logs, les changements de format et les requêtes en streaming.
-- Écrire les données d'audit dans les tables métier de New-API augmente le risque de mise à niveau et couple l'audit à la passerelle.
-- Les compteurs de tokens ne prouvent pas qu'une requête est liée au travail. Il faut des preuves de prompt, des résultats de classification et une revue manuelle.
-
-Ce fork utilise donc le modèle "collecte minimale dans New-API + traitement indépendant dans token-audit" :
-
-- New-API ne fait qu'envoyer les événements request et usage à des points stables.
-- `request_id` relie le prompt à l'utilisation finale.
-- L'envoi est asynchrone et non bloquant, afin qu'une panne du service d'audit ne bloque pas les requêtes API.
-- Les prompts complets ne sont pas écrits dans la base principale New-API ; ils sont chiffrés par le service d'audit.
-- Le service d'audit utilise par défaut une base SQLite locale en production, avec une rétention de 30 jours. Aucun service MySQL supplémentaire n'est requis.
-- Classification, rapports, revue et notifications évoluent dans `token-audit`.
-
-## Flux
-
-```text
-CPA / Client
-    |
-    v
-patched New-API
-    | 1. envoi request après analyse
-    | 2. envoi usage après règlement
-    v
-service token-audit
-    |
-    | request_id relie prompt et token usage
-    v
-base d'audit SQLite locale
-    |
-    v
-classification, rapports, revue, push WeCom
-```
-
-New-API continue de gérer l'authentification, le routage, le forwarding, la facturation et les journaux habituels. Les échecs d'envoi d'audit sont seulement journalisés.
-
-## Variables d'environnement
-
-Ce fork ajoute les variables suivantes côté New-API :
-
-| Variable | Défaut | Description |
-| --- | --- | --- |
-| `AUDIT_ENABLED` | `false` | Active l'envoi d'audit |
-| `AUDIT_ENDPOINT` | vide | URL du service d'audit, par exemple `http://token-audit:8000` |
-| `AUDIT_SECRET` | vide | Secret HMAC partagé entre New-API et le service d'audit |
-| `AUDIT_TIMEOUT_MS` | `800` | Timeout par événement en millisecondes |
-| `AUDIT_QUEUE_SIZE` | `1000` | Taille de la file asynchrone |
-| `AUDIT_MAX_EVENT_BYTES` | `1048576` | Maximum serialized audit event size in bytes; oversized request events omit full prompt text and send only hash/preview/length, while other oversized events are dropped |
-| `AUDIT_EXCLUDED_TOKEN_NAMES` | vide | Liste de noms de tokens exclus, séparés par des virgules, utilisée pour le token du classificateur |
-
-Configuration recommandée :
-
-```env
-AUDIT_ENABLED=true
-AUDIT_ENDPOINT=http://token-audit:8000
-AUDIT_SECRET=replace-with-long-random-secret
-AUDIT_TIMEOUT_MS=800
-AUDIT_QUEUE_SIZE=1000
-AUDIT_MAX_EVENT_BYTES=1048576
-AUDIT_EXCLUDED_TOKEN_NAMES=audit-classifier
-```
+<a id="deployment"></a>
 
 ## Déploiement
 
-Déploiement recommandé en production :
+### Docker Compose
 
-1. Déployer d'abord le service `token-audit`. La base d'audit est un fichier SQLite local, par exemple `/opt/token-audit/data/token_audit.db`.
-2. Construire et déployer l'image New-API de ce fork avec `AUDIT_ENABLED=false`.
-3. Vérifier que CPA, New-API et les appels aux modèles upstream fonctionnent normalement.
-4. Passer `AUDIT_ENABLED=true` pour entrer en mode shadow reporting.
-5. Comparer les `logs` New-API avec la base d'audit : nombre de requêtes, tokens et taux de liaison `request_id`.
-6. Après réconciliation stable, activer classification, rapports quotidiens/hebdomadaires et push WeCom.
-
-Exemple Docker Compose :
-
-```yaml
-services:
-  new-api:
-    image: your-registry/new-api-audit:audit-hook
-    environment:
-      AUDIT_ENABLED: "true"
-      AUDIT_ENDPOINT: "http://token-audit:8000"
-      AUDIT_SECRET: "${AUDIT_SECRET}"
-      AUDIT_TIMEOUT_MS: "800"
-      AUDIT_QUEUE_SIZE: "1000"
-      AUDIT_MAX_EVENT_BYTES: "1048576"
-      AUDIT_EXCLUDED_TOKEN_NAMES: "audit-classifier"
-    depends_on:
-      - token-audit
-```
-
-Build local :
+La [configuration Compose](./docker-compose.yml) du dépôt démarre **New API + PostgreSQL + Redis** par défaut. Elle contient aussi des exemples pour MySQL et une base de journaux ClickHouse distincte.
 
 ```bash
-docker build -t new-api-audit:audit-hook .
+git clone https://github.com/QuantumNous/new-api.git
+cd new-api
 ```
 
-## Vérification
-
-Ce fork a été vérifié localement avec :
+Avant de démarrer, modifiez `docker-compose.yml` : remplacez les mots de passe d'exemple de la base et de Redis dans les services et les chaînes de connexion, puis définissez un `SESSION_SECRET` aléatoire et persistant (générable avec `openssl rand -hex 32`). Pour une console HTTPS, définissez `SESSION_COOKIE_SECURE=true` et renseignez son origine HTTPS publique exacte dans `SESSION_COOKIE_TRUSTED_URL`.
 
 ```bash
-gofmt -w audit/sender.go controller/relay.go model/log.go
-git diff --check
-go test ./audit ./model ./controller -run '^$'
+docker compose up -d
+docker compose logs -f new-api
 ```
 
-Notes :
+### Stockage et configuration
 
-- `-run '^$'` vérifie la compilation des paquets touchés sans exécuter les tests existants.
-- Un `go test ./audit ./model ./controller` complet rencontre actuellement un échec existant d'initialisation SQLite dans `controller`, sans lien avec le hook d'audit.
-- Avant la production, exécuter une vérification complète en CI ou dans l'environnement de build d'image.
+| Composant | Options |
+| --- | --- |
+| Base principale | SQLite, MySQL ≥ 5.7.8 ou PostgreSQL ≥ 9.6 |
+| Base de journaux distincte | Configurée avec `LOG_SQL_DSN` ; prend aussi en charge ClickHouse |
+| Cache | Redis facultatif et cache mémoire ; partagez Redis si les nœuds doivent partager les limites de débit |
+| Plateformes des conteneurs | Linux amd64 / arm64 |
 
-## Confidentialité et sécurité
+| Variable | Rôle |
+| --- | --- |
+| `SQL_DSN` | Connexion à la base principale ; SQLite si non définie |
+| `LOG_SQL_DSN` | Connexion facultative à une base de journaux distincte |
+| `REDIS_CONN_STRING` | Chaîne de connexion Redis |
+| `SESSION_SECRET` | Secret d'authentification persistant, identique sur tous les nœuds |
+| `CRYPTO_SECRET` | Vaut `SESSION_SECRET` par défaut ; même valeur effective pour les nœuds partageant Redis |
+| `SESSION_COOKIE_SECURE` | `true` pour une console HTTPS ; active les cookies de renouvellement Secure et les contrôles stricts d'origine du renouvellement et de la déconnexion |
+| `SESSION_COOKIE_TRUSTED_URL` | Obligatoire en mode Secure : origines HTTPS exactes séparées par des virgules, sans chemin ni joker ; à laisser non définie en HTTP local |
+| `TRUSTED_PROXIES` | IP/CIDR des proxys de confiance, ou `none` ; à configurer selon votre réseau |
 
-Les données d'audit peuvent contenir des prompts sensibles. Déployez-les selon vos règles internes :
+Consultez l'[exemple d'environnement](./.env.example), la [référence des variables](https://docs.newapi.ai/en/docs/installation/config-maintenance/environment-variables) et le [guide des sessions](./docs/authentication.md). Injectez les variables du conteneur avec `environment` ou `env_file` dans Compose ; copier `.env.example` ne suffit pas.
 
-- Garder `AUDIT_ENDPOINT` sur le réseau Docker/interne. Ne pas l'exposer publiquement.
-- Utiliser un `AUDIT_SECRET` fort et le gérer séparément de la configuration ordinaire New-API.
-- Ne pas stocker les prompts complets dans la base principale New-API ; les chiffrer côté service d'audit.
-- Les rapports doivent afficher seulement les aperçus de prompts par défaut. Le texte complet doit être réservé à une revue administrateur interne.
-- Si le classificateur appelle les modèles via New-API, utiliser un token dédié et l'ajouter à `AUDIT_EXCLUDED_TOKEN_NAMES`.
+En production, utilisez HTTPS et configurez le proxy inverse pour le streaming et WebSocket. Conservez et sauvegardez les bases et les données montées. Tous les nœuds doivent partager la base principale et les secrets d'authentification ; des Redis distincts ou des limiteurs en mémoire comptent les limites séparément par nœud. Le guide des sessions détaille la propagation selon la topologie.
 
-## Stratégie de mise à niveau
+Choisissez une version précise d'image dans les [versions publiées](https://github.com/QuantumNous/new-api/releases), lisez ses notes et sauvegardez avant toute mise à niveau. Le tag `latest` évolue avec les publications ; évaluez les migrations et la compatibilité de votre installation.
 
-Le fork garde une surface de modification minimale pour suivre New-API upstream :
+<a id="development"></a>
+
+## Développement et extensions
+
+Le backend utilise Go et Gin ; la console utilise React 19, TypeScript, Rsbuild, TanStack et Tailwind CSS 4. Utilisez Bun pour le frontend. Consultez [go.mod](./go.mod) pour la version de référence du langage Go et [Dockerfile](./Dockerfile) pour la chaîne de compilation du conteneur.
+
+Compilez le frontend avant de démarrer le backend, qui intègre `web/dist` :
 
 ```bash
-git remote add upstream https://github.com/QuantumNous/new-api.git
-git fetch upstream --tags
-
-git switch -c upgrade/upstream-vX.Y.Z
-git merge --no-ff vX.Y.Z
-
-gofmt -w audit/sender.go controller/relay.go model/log.go
-go test ./audit ./model ./controller -run '^$'
-docker build -t new-api-audit:audit-hook .
+# Racine du dépôt
+cd web
+bun install --frozen-lockfile
+bun run build
+cd ..
+go run .
 ```
 
-En cas de conflit de rebase, vérifier :
+Dans un second terminal, démarrez le serveur de développement frontend :
 
-- La zone d'analyse de requête dans `controller/relay.go`, près des contrôles de mots sensibles et de l'estimation des tokens.
-- `RecordConsumeLog` dans `model/log.go`.
-- L'existence de `common.RequestIdKey` et `common.UpstreamRequestIdKey`.
+```bash
+cd web
+bun run dev -- --port 5173
+```
 
-## Liens Amis
+Ouvrez [http://localhost:5173](http://localhost:5173) ; les requêtes API sont relayées vers le backend sur le port 3000. Pour un backend de développement en conteneur, consultez [docker-compose.dev.yml](./docker-compose.dev.yml) et la cible `make dev` du [makefile](./makefile).
 
-- [LinuxDO](https://linux.do/) : communauté technique de qualité.
+| Emplacement | Responsabilité |
+| --- | --- |
+| `router/`, `middleware/`, `controller/` | Routes HTTP, contrôles d'accès et gestionnaires API |
+| `relay/` | Adaptateurs amont et routage des requêtes |
+| `service/`, `model/` | Logique métier et persistance |
+| [relaykit/](./relaykit/README.md) | Module Go autonome pour les DTO et conversions de protocoles |
+| [plugins/tasks/](./plugins/tasks/) | Extensions de tâches JavaScript ; contrat et limites de l'hôte dans [Task Plugin API v1](./docs/plugin-api/v1.md) |
+| `web/` | Console web ; voir les [conventions frontend](./web/AGENTS.md) |
+| [electron/](./electron/README.md) | Application de bureau et packaging |
 
-## Relation avec New-API upstream
+Lisez [AGENTS.md](./AGENTS.md) avant de contribuer. Exécutez les vérifications adaptées : `make test` pour les modules Go ; `bun run typecheck`, `bun run lint`, `bun run test` et `bun run build` dans `web/` pour le frontend. Une modification de RelayKit nécessite aussi `GOWORK=off go build ./...` depuis `relaykit/`.
 
-Ce dépôt conserve les fonctionnalités et la licence originales de New-API, et ajoute seulement les hooks minimaux requis pour l'audit interne.
+<a id="documentation"></a>
 
-La base de code actuelle correspond à l'upstream `v1.0.0-rc.22`. New-API peut utiliser ClickHouse séparément pour les journaux de passerelle via `LOG_SQL_DSN` ; le service autonome `token-audit` continue d'utiliser sa propre base d'audit SQLite, avec une responsabilité différente.
+## Documentation et communauté
 
-Références du projet original :
+| Ressource | Lien |
+| --- | --- |
+| Documentation officielle | [Guides](https://docs.newapi.ai/en/docs) · [Installation](https://docs.newapi.ai/en/docs/installation) · [Référence API](https://docs.newapi.ai/en/docs/api) |
+| Exploration du projet | [DeepWiki](https://deepwiki.com/QuantumNous/new-api) |
+| Questions et échanges | [FAQ](https://docs.newapi.ai/en/docs/support/faq) · [Communauté](https://docs.newapi.ai/en/docs/support/community-interaction) |
+| Bugs et propositions | [GitHub Issues](https://github.com/QuantumNous/new-api/issues) |
+| Vulnérabilités | Signalement privé selon la [politique de sécurité](./.github/SECURITY.md) |
 
-- [Documentation New-API](https://docs.newapi.pro/en/docs)
-- [Guide de déploiement](https://docs.newapi.pro/en/docs/installation)
-- [Variables d'environnement](https://docs.newapi.pro/en/docs/installation/config-maintenance/environment-variables)
-- [Documentation API](https://docs.newapi.pro/en/docs/api)
+Pour signaler un bug, indiquez la version, le déploiement, les étapes de reproduction et des journaux expurgés des données sensibles. Les contributions à la documentation, aux traductions, aux intégrations et aux tests de régression ciblés sont les bienvenues.
 
-> Les utilisateurs doivent toujours respecter les conditions des fournisseurs de modèles, la licence New-API originale et les exigences applicables en matière de services d'IA générative, conservation des journaux, confidentialité et sécurité des données.
+---
+
+## 🔗 Projets connexes
+
+### Projets en amont
+
+| Projet | Description |
+|------|------|
+| [One API](https://github.com/songquanpeng/one-api) | Base du projet original |
+| [Midjourney-Proxy](https://github.com/novicezk/midjourney-proxy) | Prise en charge de l'interface Midjourney |
+
+### Outils d'accompagnement
+
+| Projet | Description |
+|------|------|
+| [new-api-key-tool](https://github.com/Calcium-Ion/new-api-key-tool) | Outil de recherche de quota d'utilisation avec une clé |
+| [new-api-horizon](https://github.com/Calcium-Ion/new-api-horizon) | Version optimisée haute performance de New API |
+
+---
+
+## 📜 Licence
+
+Ce projet est sous licence [GNU Affero General Public License v3.0 (AGPLv3)](./LICENSE).
+
+Des [conditions supplémentaires](./NOTICE) s'appliquent au titre de la section 7 de l'AGPLv3. Les versions modifiées doivent conserver la mention `Frontend design and development by New API contributors.` dans les mentions légales appropriées et les emplacements visibles de l'interface dédiés aux informations, au droit, au pied de page ou aux attributions, ainsi qu'un lien visible vers le projet original : <https://github.com/QuantumNous/new-api>.
+
+Il s'agit d'un projet open-source développé sur la base de [One API](https://github.com/songquanpeng/one-api) (licence MIT).
+
+Si les politiques de votre organisation ne permettent pas l'utilisation de logiciels sous licence AGPLv3, ou si vous souhaitez éviter les obligations open-source de l'AGPLv3, veuillez nous contacter à : [support@quantumnous.com](mailto:support@quantumnous.com)
+
+Consultez [NOTICE](./NOTICE) et les [licences tierces](./THIRD-PARTY-LICENSES.md) pour les attributions et les dépendances.
+
+---
+
+## 🌟 Historique des étoiles
+
+<div align="center">
+
+[![Graphique de l'historique des étoiles](https://api.star-history.com/svg?repos=Calcium-Ion/new-api&type=Date)](https://star-history.com/#Calcium-Ion/new-api&Date)
+
+</div>
+
+---
+
+<div align="center">
+
+### 💖 Merci d'utiliser New API
+
+Si ce projet vous est utile, bienvenue à nous donner une ⭐️ Étoile！
+
+**[Documentation officielle](https://docs.newapi.ai/en/docs)** • **[Commentaires sur les problèmes](https://github.com/Calcium-Ion/new-api/issues)** • **[Dernière version](https://github.com/Calcium-Ion/new-api/releases)**
+
+<sub>Construit avec ❤️ par QuantumNous</sub>
+
+</div>

@@ -68,7 +68,9 @@ func TestRelayInfoMetaTypedNilReceiver(t *testing.T) {
 		meta.SetReasoningEffort("high")
 		meta.IncrSendResponseCount()
 		meta.AppendRequestConversion(types.RelayFormatClaude)
+		meta.SetResponsesToolState(&convmeta.ResponsesToolState{})
 	})
+	assert.Nil(t, meta.ResponsesToolState())
 
 	firstState := meta.EnsureClaudeConvertInfo()
 	secondState := meta.EnsureClaudeConvertInfo()
@@ -87,6 +89,19 @@ func TestRelayInfoMetaTypedNilReceiver(t *testing.T) {
 	assert.NotNil(t, firstOptions.Gemini.SafetySetting)
 	assert.NotNil(t, firstOptions.PreserveThinkingSuffix)
 	assert.NotNil(t, firstOptions.PreserveEffortTail)
+}
+
+func TestRelayInfoResponsesToolStateRoundTrip(t *testing.T) {
+	info := &RelayInfo{}
+	state := &convmeta.ResponsesToolState{CustomToolNames: map[string]struct{}{"exec": {}}}
+
+	info.SetResponsesToolState(state)
+	assert.Same(t, state, info.ResponsesToolState())
+	assert.True(t, convmeta.ResponsesToolStateOf(info).IsCustomTool("exec"))
+
+	info.SetResponsesToolState(nil)
+	assert.Nil(t, info.ResponsesToolState())
+	assert.False(t, convmeta.ResponsesToolStateOf(info).IsCustomTool("exec"))
 }
 
 func TestGenRelayInfoCapturesRequestReasoningEffort(t *testing.T) {
@@ -302,7 +317,7 @@ func TestInitChannelMetaResetsPerAttemptStreamStateAndPreservesRequestState(t *t
 	require.NoError(t, err)
 
 	claudeState := relayconvert.NewClaudeToChatStreamState()
-	_, err = claudeState.ConvertChunk(&dto.ClaudeResponse{
+	_, err = claudeState.ConvertChunk(context.Background(), &dto.ClaudeResponse{
 		Type:  "content_block_start",
 		Index: ptr(7),
 		ContentBlock: &dto.ClaudeMediaMessage{
@@ -312,7 +327,7 @@ func TestInitChannelMetaResetsPerAttemptStreamStateAndPreservesRequestState(t *t
 		},
 	})
 	require.NoError(t, err)
-	_, err = claudeState.ConvertChunk(&dto.ClaudeResponse{
+	_, err = claudeState.ConvertChunk(context.Background(), &dto.ClaudeResponse{
 		Type:  "content_block_delta",
 		Index: ptr(7),
 		Delta: &dto.ClaudeMediaMessage{
@@ -357,7 +372,7 @@ func TestInitChannelMetaResetsPerAttemptStreamStateAndPreservesRequestState(t *t
 	require.NotNil(t, info.LastError)
 
 	freshClaude := relayconvert.NewClaudeToChatStreamState()
-	_, err = freshClaude.ConvertChunk(&dto.ClaudeResponse{
+	freshChunk, err := freshClaude.ConvertChunk(context.Background(), &dto.ClaudeResponse{
 		Type:  "content_block_delta",
 		Index: ptr(7),
 		Delta: &dto.ClaudeMediaMessage{
@@ -365,8 +380,10 @@ func TestInitChannelMetaResetsPerAttemptStreamStateAndPreservesRequestState(t *t
 			PartialJson: ptr(`{"q":"x"}`),
 		},
 	})
-	require.Error(t, err)
-	assert.Contains(t, err.Error(), "unknown content block index")
+	// Unknown block indexes are defensively skipped instead of failing the
+	// whole stream.
+	require.NoError(t, err)
+	assert.Nil(t, freshChunk)
 
 	info.IncrSendResponseCount()
 	responses := relayconvert.StreamResponseOpenAI2Claude(&dto.ChatCompletionsStreamResponse{

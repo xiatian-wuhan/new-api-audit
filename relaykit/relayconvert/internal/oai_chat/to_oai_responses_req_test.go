@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/QuantumNous/new-api/relaykit/dto"
+	"github.com/QuantumNous/new-api/relaykit/relayconvert/internal/convdiag"
 	kitutil "github.com/QuantumNous/new-api/relaykit/relayconvert/kitutil"
 	"github.com/samber/lo"
 	"github.com/stretchr/testify/assert"
@@ -38,6 +39,37 @@ func TestChatCompletionsRequestToResponsesRequestInstructionsAndTools(t *testing
 	assert.Equal(t, "function_call", gjson.GetBytes(got.Input, "2.type").String())
 	assert.Equal(t, "call_1", gjson.GetBytes(got.Input, "2.call_id").String())
 	assert.Equal(t, "function_call_output", gjson.GetBytes(got.Input, "3.type").String())
+}
+
+func TestChatCompletionsRequestToResponsesRequestImageDetail(t *testing.T) {
+	tests := []struct {
+		name     string
+		imageURL any
+		want     string
+	}{
+		{name: "object without detail defaults to auto", imageURL: map[string]any{"url": "https://example.test/a.png"}, want: "auto"},
+		{name: "low detail is preserved", imageURL: map[string]any{"url": "https://example.test/a.png", "detail": "low"}, want: "low"},
+		{name: "high detail is preserved", imageURL: map[string]any{"url": "https://example.test/a.png", "detail": "high"}, want: "high"},
+		{name: "auto detail is preserved", imageURL: map[string]any{"url": "https://example.test/a.png", "detail": "auto"}, want: "auto"},
+		{name: "original detail is preserved", imageURL: map[string]any{"url": "https://example.test/a.png", "detail": "original"}, want: "original"},
+		{name: "unknown detail falls back to auto", imageURL: map[string]any{"url": "https://example.test/a.png", "detail": "bogus"}, want: "auto"},
+		{name: "plain string url defaults to auto", imageURL: "https://example.test/a.png", want: "auto"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := ChatCompletionsRequestToResponsesRequest(context.Background(), &dto.GeneralOpenAIRequest{
+				Model: "gpt-test",
+				Messages: []dto.Message{{Role: "user", Content: []any{
+					map[string]any{"type": "image_url", "image_url": tt.imageURL},
+				}}},
+			})
+			require.NoError(t, err)
+
+			assert.Equal(t, "input_image", gjson.GetBytes(got.Input, "0.content.0.type").String())
+			assert.Equal(t, tt.want, gjson.GetBytes(got.Input, "0.content.0.detail").String())
+		})
+	}
 }
 
 func TestChatCompletionsRequestToResponsesRequestPreservesPromptCacheKey(t *testing.T) {
@@ -175,4 +207,54 @@ func assistantMessageWithTool(content string, id string, name string, args strin
 		},
 	})
 	return msg
+}
+
+// B12: explicitly-provided max_output_tokens below 16 clamps to 16.
+func TestChatCompletionsRequestToResponsesClampsMaxOutputTokens(t *testing.T) {
+	maxTokens := uint(5)
+	got, err := ChatCompletionsRequestToResponsesRequest(context.Background(), &dto.GeneralOpenAIRequest{
+		Model:     "gpt-test",
+		Messages:  []dto.Message{{Role: "user", Content: "hi"}},
+		MaxTokens: &maxTokens,
+	})
+	require.NoError(t, err)
+	require.NotNil(t, got.MaxOutputTokens)
+	assert.Equal(t, uint(16), *got.MaxOutputTokens)
+
+	maxCompletionTokens := uint(5)
+	got, err = ChatCompletionsRequestToResponsesRequest(context.Background(), &dto.GeneralOpenAIRequest{
+		Model:               "gpt-test",
+		Messages:            []dto.Message{{Role: "user", Content: "hi"}},
+		MaxCompletionTokens: &maxCompletionTokens,
+	})
+	require.NoError(t, err)
+	require.NotNil(t, got.MaxOutputTokens)
+	assert.Equal(t, uint(16), *got.MaxOutputTokens)
+}
+
+// B13: non-text parts in system/developer messages are reported instead of
+// being silently dropped.
+func TestChatCompletionsRequestToResponsesSystemNonTextPartsDiagnostic(t *testing.T) {
+	ctx, collector := convdiag.WithCollector(context.Background())
+	got, err := ChatCompletionsRequestToResponsesRequest(ctx, &dto.GeneralOpenAIRequest{
+		Model: "gpt-test",
+		Messages: []dto.Message{
+			{Role: "system", Content: []dto.MediaContent{
+				{Type: dto.ContentTypeText, Text: "rules"},
+				{Type: dto.ContentTypeImageURL, ImageUrl: &dto.MessageImageUrl{Url: "https://example.test/a.png"}},
+			}},
+			{Role: "user", Content: "hi"},
+		},
+	})
+	require.NoError(t, err)
+
+	// The text part still lands in instructions.
+	var instructions string
+	require.NoError(t, kitutil.Unmarshal(got.Instructions, &instructions))
+	assert.Contains(t, instructions, "rules")
+
+	diagnostics := collector.Diagnostics()
+	require.Len(t, diagnostics, 1)
+	assert.Equal(t, "dropped_content_part", diagnostics[0].Code)
+	assert.Contains(t, diagnostics[0].Path, "messages[0].content[1]")
 }

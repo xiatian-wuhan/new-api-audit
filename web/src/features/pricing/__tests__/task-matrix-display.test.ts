@@ -140,6 +140,38 @@ describe('conditional task price display', () => {
     ).toBe(true)
   })
 
+  test.each([
+    {
+      expression: 'tier("base", u("count") * 0 + u("seconds") * 0.7)',
+      unitPrices: { seconds: 0.7 },
+    },
+    {
+      expression: 'tier("free", u("count") * 0 + u("seconds") * 0)',
+      unitPrices: { count: 0, seconds: 0 },
+    },
+  ])(
+    'shows a usage price that is zero in every tier only when no other usage price is set: $expression',
+    ({ expression, unitPrices }) => {
+      expect(
+        getTaskPricingDisplayTiers(expression, {
+          count: { type: 'number', unit: 'count' },
+          seconds: { type: 'number', unit: 'second' },
+        }).map((tier) => tier.unitPrices)
+      ).toEqual([unitPrices])
+    }
+  )
+
+  test('treats a nested condition on an undeclared enum value as never matching', () => {
+    const tiers = getTaskPricingDisplayTiers(expression, {
+      ...schema,
+      resolution: { enum: ['768P', '1080P'] },
+    })
+    expect(tiers).toHaveLength(4)
+    expect(tiers.map((tier) => tier.unitPrices.seconds)).toEqual([
+      0.072, 0.09, 0.096, 0.12,
+    ])
+  })
+
   test('falls back completely when categorical expansion exceeds the display limit', () => {
     expect(
       getTaskPricingDisplayTiers(

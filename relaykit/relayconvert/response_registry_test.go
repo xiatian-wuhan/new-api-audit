@@ -1,10 +1,14 @@
 package relayconvert
 
 import (
+	"context"
+	"strings"
 	"testing"
 
 	"github.com/QuantumNous/new-api/relaykit/dto"
 	"github.com/QuantumNous/new-api/relaykit/relayconvert/convmeta"
+	"github.com/QuantumNous/new-api/relaykit/relayconvert/internal/convdiag"
+	kitutil "github.com/QuantumNous/new-api/relaykit/relayconvert/kitutil"
 	"github.com/QuantumNous/new-api/relaykit/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -19,8 +23,8 @@ func TestLookupBuiltinResponseConverters(t *testing.T) {
 		quality        ResponseConverterQuality
 		stepConverters []string
 	}{
-		{lookupID: ResponseConverterOAIChatToOAIResponses, id: ConverterOpenAIChatToOpenAIResponses, from: types.RelayFormatOpenAI, to: types.RelayFormatOpenAIResponses, quality: ResponseConverterQualityGood},
-		{lookupID: ResponseConverterOAIResponsesToOAIChat, id: ConverterOpenAIResponsesToOpenAIChat, from: types.RelayFormatOpenAIResponses, to: types.RelayFormatOpenAI, quality: ResponseConverterQualityGood},
+		{lookupID: ResponseConverterOAIChatToOAIResponses, id: ConverterOpenAIChatToOpenAIResponses, from: types.RelayFormatOpenAI, to: types.RelayFormatOpenAIResponses, quality: ResponseConverterQualityFair},
+		{lookupID: ResponseConverterOAIResponsesToOAIChat, id: ConverterOpenAIResponsesToOpenAIChat, from: types.RelayFormatOpenAIResponses, to: types.RelayFormatOpenAI, quality: ResponseConverterQualityFair},
 		{lookupID: ResponseConverterOAIChatToClaudeMessages, id: ConverterOpenAIChatToClaudeMessages, from: types.RelayFormatOpenAI, to: types.RelayFormatClaude, quality: ResponseConverterQualityFair},
 		{lookupID: ResponseConverterOAIChatToGeminiChat, id: ConverterOpenAIChatToGeminiContent, from: types.RelayFormatOpenAI, to: types.RelayFormatGemini, quality: ResponseConverterQualityFair},
 		{lookupID: ResponseConverterClaudeMessagesToOAIChat, id: ConverterClaudeMessagesToOpenAIChat, from: types.RelayFormatClaude, to: types.RelayFormatOpenAI, quality: ResponseConverterQualityFair},
@@ -125,7 +129,7 @@ func TestConvertResponseDirectConverters(t *testing.T) {
 	toResponses, err := ConvertResponse(nil, info, types.RelayFormatOpenAIResponses, chat)
 	require.NoError(t, err)
 	assert.Equal(t, ConverterOpenAIChatToOpenAIResponses, toResponses.Converter)
-	assert.Equal(t, ResponseConverterQualityGood, toResponses.Quality)
+	assert.Equal(t, ResponseConverterQualityFair, toResponses.Quality)
 	assert.Equal(t, types.RelayFormatOpenAI, toResponses.From)
 	assert.Equal(t, types.RelayFormat(types.RelayFormatOpenAIResponses), toResponses.To)
 	assert.Equal(t, []ResponseStep{{Converter: ConverterOpenAIChatToOpenAIResponses, From: types.RelayFormatOpenAI, To: types.RelayFormatOpenAIResponses}}, toResponses.Steps)
@@ -155,7 +159,7 @@ func TestConvertResponseDirectConverters(t *testing.T) {
 	toChat, err := ConvertResponse(nil, info, types.RelayFormatOpenAI, responses)
 	require.NoError(t, err)
 	assert.Equal(t, ConverterOpenAIResponsesToOpenAIChat, toChat.Converter)
-	assert.Equal(t, ResponseConverterQualityGood, toChat.Quality)
+	assert.Equal(t, ResponseConverterQualityFair, toChat.Quality)
 	require.IsType(t, &dto.OpenAITextResponse{}, toChat.Value)
 	assert.Equal(t, 10, toChat.Usage.TotalTokens)
 	require.NotNil(t, toChat.Usage.BillingUsage)
@@ -698,4 +702,158 @@ func textRegistryResponsesResponse() *dto.OpenAIResponsesResponse {
 
 func respPtr[T any](value T) *T {
 	return &value
+}
+
+func TestConvertResponseToResponsesRestoresRecordedCustomTools(t *testing.T) {
+	info := &convmeta.Values{ResponsesTools: &convmeta.ResponsesToolState{CustomToolNames: map[string]struct{}{"exec": {}}}}
+	chatMessage := dto.Message{Role: "assistant"}
+	chatMessage.SetToolCalls([]dto.ToolCallRequest{{ID: "call_exec", Type: "function", Function: dto.FunctionRequest{Name: "exec", Arguments: `{"input":"ls"}`}}})
+	geminiExecCall := `{"candidates":[{"finishReason":"STOP","content":{"role":"model","parts":[{"functionCall":{"name":"exec","args":{"input":"ls"}}}]}}],"usageMetadata":{"promptTokenCount":4,"candidatesTokenCount":2,"totalTokenCount":6}}`
+	tests := []struct {
+		name     string
+		from     types.RelayFormat
+		response any
+		stream   []any
+	}{
+		{
+			name: "chat",
+			from: types.RelayFormatOpenAI,
+			response: &dto.OpenAITextResponse{
+				Id:      "chatcmpl_1",
+				Model:   "gpt-test",
+				Choices: []dto.OpenAITextResponseChoice{{Message: chatMessage, FinishReason: "tool_calls"}},
+			},
+			stream: []any{
+				chatStreamChunk(`{"id":"chatcmpl_1","model":"gpt-test","choices":[{"index":0,"delta":{"tool_calls":[{"index":0,"id":"call_exec","type":"function","function":{"name":"exec","arguments":"{\"input\":"}}]}}]}`),
+				chatStreamChunk(`{"id":"chatcmpl_1","model":"gpt-test","choices":[{"index":0,"delta":{"tool_calls":[{"index":0,"function":{"arguments":"\"ls\"}"}}]},"finish_reason":"tool_calls"}]}`),
+			},
+		},
+		{
+			name: "claude",
+			from: types.RelayFormatClaude,
+			response: &dto.ClaudeResponse{
+				Id:         "msg_1",
+				Type:       "message",
+				Role:       "assistant",
+				Model:      "claude-test",
+				StopReason: "tool_use",
+				Content:    []dto.ClaudeMediaMessage{{Type: "tool_use", Id: "toolu_exec", Name: "exec", Input: map[string]any{"input": "ls"}}},
+			},
+			stream: []any{
+				claudeStreamChunk(`{"type":"message_start","message":{"id":"msg_1","type":"message","role":"assistant","model":"claude-test","content":[],"usage":{"input_tokens":4,"output_tokens":0}}}`),
+				claudeStreamChunk(`{"type":"content_block_start","index":0,"content_block":{"type":"tool_use","id":"toolu_exec","name":"exec","input":{}}}`),
+				claudeStreamChunk(`{"type":"content_block_delta","index":0,"delta":{"type":"input_json_delta","partial_json":"{\"input\":"}}`),
+				claudeStreamChunk(`{"type":"content_block_delta","index":0,"delta":{"type":"input_json_delta","partial_json":"\"ls\"}"}}`),
+				claudeStreamChunk(`{"type":"content_block_stop","index":0}`),
+				claudeStreamChunk(`{"type":"message_delta","delta":{"stop_reason":"tool_use"},"usage":{"output_tokens":2}}`),
+				claudeStreamChunk(`{"type":"message_stop"}`),
+			},
+		},
+		{
+			name:     "gemini",
+			from:     types.RelayFormatGemini,
+			response: geminiStreamChunk(geminiExecCall),
+			stream:   []any{geminiStreamChunk(geminiExecCall)},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result, err := ConvertResponse(nil, info, types.RelayFormatOpenAIResponses, tt.response)
+			require.NoError(t, err)
+			responses, ok := result.Value.(*dto.OpenAIResponsesResponse)
+			require.True(t, ok)
+			require.Len(t, responses.Output, 1)
+			assert.Equal(t, "custom_tool_call", responses.Output[0].Type)
+			assert.Equal(t, "exec", responses.Output[0].Name)
+			assert.Equal(t, `"ls"`, string(responses.Output[0].Input))
+
+			state, err := NewResponseStreamState(tt.from, types.RelayFormatOpenAIResponses, ResponseStreamOptions{ID: "resp_1", Model: "model-test"})
+			require.NoError(t, err)
+			var results []ResponseResult
+			for _, chunk := range tt.stream {
+				chunkResults, err := ConvertStreamResponseChunk(nil, info, state, chunk)
+				require.NoError(t, err)
+				results = append(results, chunkResults...)
+			}
+			finals, err := FinalizeStreamResponse(nil, info, state)
+			require.NoError(t, err)
+			results = append(results, finals...)
+
+			var toolEvents []string
+			for _, result := range results {
+				event, ok := result.Value.(ChatToResponsesStreamEvent)
+				require.True(t, ok)
+				switch {
+				case event.Payload.Item != nil && event.Payload.Item.Type != "message":
+					toolEvents = append(toolEvents, event.Type+" "+event.Payload.Item.Type+" "+string(event.Payload.Item.Input))
+				case event.Type == "response.custom_tool_call_input.delta":
+					toolEvents = append(toolEvents, event.Type+" "+event.Payload.Delta)
+				case event.Type == "response.custom_tool_call_input.done":
+					require.NotNil(t, event.Payload.Input)
+					toolEvents = append(toolEvents, event.Type+" "+*event.Payload.Input)
+				case strings.Contains(event.Type, "function_call_arguments"):
+					toolEvents = append(toolEvents, event.Type)
+				}
+			}
+			assert.Equal(t, []string{
+				`response.output_item.added custom_tool_call ""`,
+				"response.custom_tool_call_input.delta ls",
+				"response.custom_tool_call_input.done ls",
+				`response.output_item.done custom_tool_call "ls"`,
+			}, toolEvents)
+		})
+	}
+}
+
+// the upstream stream is truncated before any stop event.
+func TestFinalizeClaudeMessagesStreamToOAIChatSynthesizesTerminalChunk(t *testing.T) {
+	state, err := NewResponseStreamState(types.RelayFormatClaude, types.RelayFormatOpenAI, ResponseStreamOptions{})
+	require.NoError(t, err)
+
+	_, err = ConvertStreamResponseChunk(nil, nil, state, &dto.ClaudeResponse{
+		Type:    "message_start",
+		Message: &dto.ClaudeMediaMessage{Id: "msg_1", Model: "claude-test", Type: "message"},
+	})
+	require.NoError(t, err)
+	_, err = ConvertStreamResponseChunk(nil, nil, state, &dto.ClaudeResponse{
+		Type:         "content_block_start",
+		Index:        respPtr(0),
+		ContentBlock: &dto.ClaudeMediaMessage{Type: "tool_use", Id: "toolu_1", Name: "lookup"},
+	})
+	require.NoError(t, err)
+
+	results, err := FinalizeStreamResponse(nil, nil, state)
+	require.NoError(t, err)
+	require.Len(t, results, 1)
+	chunk, ok := results[0].Value.(*dto.ChatCompletionsStreamResponse)
+	require.True(t, ok)
+	require.NotNil(t, chunk)
+	require.Len(t, chunk.Choices, 1)
+	require.NotNil(t, chunk.Choices[0].FinishReason)
+	assert.Equal(t, "tool_calls", *chunk.Choices[0].FinishReason)
+	assert.Equal(t, "msg_1", chunk.Id)
+}
+
+// claude_thinking_signature_missing diagnostic at the registry entry.
+func TestConvertOAIChatToClaudeThinkingSignatureDiagnostic(t *testing.T) {
+	ctx, collector := convdiag.WithCollector(context.Background())
+	chat := &dto.OpenAITextResponse{
+		Id:    "chatcmpl_1",
+		Model: "gpt-test",
+		Choices: []dto.OpenAITextResponseChoice{
+			{Index: 0, Message: dto.Message{Role: "assistant", Content: "answer", ReasoningContent: kitutil.GetPointer("hmm")}, FinishReason: "stop"},
+		},
+	}
+	result, err := ConvertResponse(ctx, nil, types.RelayFormatClaude, chat)
+	require.NoError(t, err)
+	require.NotNil(t, result)
+
+	found := false
+	for _, diagnostic := range collector.Diagnostics() {
+		if diagnostic.Code == "claude_thinking_signature_missing" {
+			found = true
+			assert.Equal(t, types.ConversionDiagnosticWarning, diagnostic.Severity)
+		}
+	}
+	assert.True(t, found, "expected claude_thinking_signature_missing diagnostic")
 }

@@ -9,8 +9,10 @@ import (
 
 	"github.com/QuantumNous/new-api/relaykit/dto"
 	"github.com/QuantumNous/new-api/relaykit/relayconvert/internal/convdiag"
+	relaymedia "github.com/QuantumNous/new-api/relaykit/relayconvert/internal/media"
 	kitutil "github.com/QuantumNous/new-api/relaykit/relayconvert/kitutil"
 	"github.com/QuantumNous/new-api/relaykit/relayconvert/reasoning"
+	"github.com/QuantumNous/new-api/relaykit/types"
 	"github.com/samber/lo"
 )
 
@@ -90,7 +92,7 @@ func ChatCompletionsRequestToResponsesRequest(ctx context.Context, req *dto.Gene
 	var instructionsParts []string
 	inputItems := make([]map[string]any, 0, len(req.Messages))
 
-	for _, msg := range req.Messages {
+	for messageIndex, msg := range req.Messages {
 		role := strings.TrimSpace(msg.Role)
 		if role == "" {
 			continue
@@ -141,13 +143,24 @@ func ChatCompletionsRequestToResponsesRequest(ctx context.Context, req *dto.Gene
 			}
 			parts := msg.ParseContent()
 			var sb strings.Builder
-			for _, part := range parts {
+			for partIndex, part := range parts {
 				if part.Type == dto.ContentTypeText && strings.TrimSpace(part.Text) != "" {
 					if sb.Len() > 0 {
 						sb.WriteString("\n")
 					}
 					sb.WriteString(part.Text)
+					continue
 				}
+				// Responses instructions accept text only; non-text parts
+				// are reported instead of being silently swallowed.
+				convdiag.Add(ctx, types.ConversionDiagnostic{
+					Code:     "dropped_content_part",
+					Path:     fmt.Sprintf("messages[%d].content[%d]", messageIndex, partIndex),
+					Message:  fmt.Sprintf("system/developer content part of type %q cannot be represented in Responses instructions and was dropped", part.Type),
+					Severity: types.ConversionDiagnosticWarning,
+					From:     types.RelayFormatOpenAI,
+					To:       types.RelayFormatOpenAIResponses,
+				})
 			}
 			if s := strings.TrimSpace(sb.String()); s != "" {
 				instructionsParts = append(instructionsParts, s)
@@ -227,9 +240,14 @@ func ChatCompletionsRequestToResponsesRequest(ctx context.Context, req *dto.Gene
 					"text": part.Text,
 				})
 			case dto.ContentTypeImageURL:
+				var sourceDetail string
+				if img := part.GetImageMedia(); img != nil {
+					sourceDetail = img.Detail
+				}
 				contentParts = append(contentParts, map[string]any{
 					"type":      "input_image",
 					"image_url": normalizeChatImageURLToString(part.ImageUrl),
+					"detail":    relaymedia.ResponsesImageDetail(sourceDetail),
 				})
 			case dto.ContentTypeInputAudio:
 				contentParts = append(contentParts, map[string]any{
@@ -237,10 +255,20 @@ func ChatCompletionsRequestToResponsesRequest(ctx context.Context, req *dto.Gene
 					"input_audio": part.InputAudio,
 				})
 			case dto.ContentTypeFile:
-				contentParts = append(contentParts, map[string]any{
-					"type": "input_file",
-					"file": part.File,
-				})
+				// Responses carries the file fields on the input_file part itself.
+				inputFile := map[string]any{"type": "input_file"}
+				if file := part.GetFile(); file != nil {
+					if file.FileName != "" {
+						inputFile["filename"] = file.FileName
+					}
+					if file.FileData != "" {
+						inputFile["file_data"] = file.FileData
+					}
+					if file.FileId != "" {
+						inputFile["file_id"] = file.FileId
+					}
+				}
+				contentParts = append(contentParts, inputFile)
 			case dto.ContentTypeVideoUrl:
 				contentParts = append(contentParts, map[string]any{
 					"type":      "input_video",
@@ -365,9 +393,9 @@ func ChatCompletionsRequestToResponsesRequest(ctx context.Context, req *dto.Gene
 		maxOutputTokens = *req.MaxCompletionTokens
 	}
 	// OpenAI Responses API rejects max_output_tokens < 16 when explicitly provided.
-	//if maxOutputTokens > 0 && maxOutputTokens < 16 {
-	//	maxOutputTokens = 16
-	//}
+	if maxOutputTokens > 0 && maxOutputTokens < 16 {
+		maxOutputTokens = 16
+	}
 
 	var topP *float64
 	if req.TopP != nil {

@@ -2,244 +2,354 @@
 
 ![new-api](/web/public/logo.png)
 
-# New API Audit Fork
+# New API
 
-**面向 Token 用量审计的 New-API 最小二开版本**
+**连接模型、应用与 Agent 的 AI 网关**
 
 <p align="center">
   <strong>简体中文</strong> |
-  <a href="./README.en.md">English</a> |
   <a href="./README.zh_TW.md">繁體中文</a> |
+  <a href="./README.md">English</a> |
   <a href="./README.fr.md">Français</a> |
   <a href="./README.ja.md">日本語</a>
 </p>
 
+<p align="center">
+  <a href="https://raw.githubusercontent.com/Calcium-Ion/new-api/main/LICENSE">
+    <img src="https://img.shields.io/github/license/Calcium-Ion/new-api?color=brightgreen" alt="license">
+  </a><!--
+  --><a href="https://github.com/Calcium-Ion/new-api/releases/latest">
+    <img src="https://img.shields.io/github/v/release/Calcium-Ion/new-api?color=brightgreen&include_prereleases" alt="release">
+  </a><!--
+  --><a href="https://hub.docker.com/r/CalciumIon/new-api">
+    <img src="https://img.shields.io/badge/docker-dockerHub-blue" alt="docker">
+  </a>
+  <a href="https://atomgit.com/QuantumNous/new-api" target="_blank">
+    <img alt="AtomGit G-Star" src="https://atomgit.com/QuantumNous/new-api/star/badge.svg"/>
+  </a>
+</p>
+
+<p align="center">
+  <a href="https://trendshift.io/repositories/20180" target="_blank">
+    <img src="https://trendshift.io/api/badge/repositories/20180" alt="QuantumNous%2Fnew-api | Trendshift" style="width: 250px; height: 55px;" width="250" height="55"/>
+  </a>
+  <br>
+  <a href="https://hellogithub.com/repository/QuantumNous/new-api" target="_blank">
+    <img src="https://api.hellogithub.com/v1/widgets/recommend.svg?rid=539ac4217e69431684ad4a0bab768811&claim_uid=tbFPfKIDHpc4TzR" alt="Featured｜HelloGitHub" style="width: 250px; height: 54px;" width="250" height="54" />
+  </a><!--
+  -->
+  <a href="https://atomgit.com/QuantumNous/new-api" target="_blank">
+    <img alt="AtomGit G-Star" src="https://atomgit.com/QuantumNous/new-api/star/new_badge.svg" width="250" height="55" />
+  </a>
+</p>
+
+<p align="center">
+  <a href="#screenshots">项目截图</a> •
+  <a href="#capabilities">核心能力</a> •
+  <a href="#quick-start">快速开始</a> •
+  <a href="#deployment">部署运维</a> •
+  <a href="#development">开发扩展</a> •
+  <a href="#documentation">文档社区</a>
+</p>
+
 </div>
 
-## 项目定位
+---
 
-这个仓库是基于 [QuantumNous/new-api](https://github.com/QuantumNous/new-api) 的审计专用 fork。
+## 📝 项目说明
 
-它不是一个重新实现的网关，也不改变 New-API 的核心业务逻辑。这个 fork 只增加一组很小的审计采集 hook，用来把 New-API 中已经解析到的请求信息和结算后的 token 用量，异步上报给独立的 [`token-audit`](https://github.com/Bigduang/new-api-audit-for-company) 审计服务。
+New API 是面向应用、Agent 和团队的自托管 AI 网关。将不同厂商的模型服务接入统一入口，在同一套控制台中管理渠道、访问权限、用量与成本。
 
-目标是支持企业内部的 Token 审计需求：
+你可以用它为团队分配已授权的模型资源，在切换上游时减少客户端改动，或搭建自己的多模型服务。支持接入 OpenAI、Anthropic、Google Gemini、Azure OpenAI、AWS Bedrock、Vertex AI、DeepSeek、通义千问及其他兼容服务。
 
-- 按时间范围统计每个用户、每个 token 的 token 消耗。
-- 识别请求类型，例如编码实现、调试修复、架构设计、配置运维、文档编写、代码审查、数据分析、疑似非工作、其他。
-- 对疑似非工作或不确定请求，能够追溯到具体用户、token、模型、时间、token 用量和 prompt 预览。
-- 保持 New-API 升级成本尽可能低，把分类、报表、复核、企业微信推送等逻辑放在独立审计服务中。
+> [!IMPORTANT]
+> - 本项目仅面向合法授权的 AI API 网关、组织内部鉴权、多模型管理、用量统计、成本核算和私有化部署场景。
+> - 使用者必须合法取得上游 API Key、账号、模型服务或接口权限，并遵守上游服务条款及适用法律法规。
+> - 使用者应确保其使用方式符合上游服务条款及适用法律法规。
+> - 面向公众提供生成式人工智能服务时，使用者应遵守[《生成式人工智能服务管理暂行办法》](http://www.cac.gov.cn/2023-07/13/c_1690898327029107.htm)等监管要求，自行完成所在司法辖区要求的备案、许可、内容安全、实名、日志留存、税务和上游授权等合规义务。
 
-## 这个 fork 做了什么
+<!-- -->
 
-当前二开集中在 3 个文件：
+> [!WARNING]
+> 将本项目作为面向公众的生成式 AI 服务或 API 转售服务运营时，使用者应先完成备案、内容安全、实名、日志留存、税务、支付和上游授权等合规义务。
 
-| 文件 | 作用 |
+---
+
+<a id="screenshots"></a>
+
+## 项目截图
+
+以下账号、渠道、插件安装状态、用量、价格和费用均为模拟数据，插件市场展示官方目录。点击图片可查看原图。
+
+| 数据看板 | 插件市场 |
 | --- | --- |
-| `audit/sender.go` | 新增审计事件 sender，负责读取环境变量、HMAC 签名、非阻塞队列、异步 HTTP 上报 |
-| `controller/relay.go` | 在渠道选定后采集 request 事件，包括用户、token、模型、路径、格式、prompt hash、prompt preview 和完整 prompt |
-| `model/log.go` | 在消费日志记录后采集 usage 事件，包括 prompt tokens、completion tokens、quota、channel、group、耗时、上游 request id |
+| [![数据看板：模拟请求量、费用和性能指标](assets/screenshots/dashboard.zh-CN.jpg)](assets/screenshots/dashboard.zh-CN.jpg) | [![插件市场：官方插件目录与模拟安装状态](assets/screenshots/plugin-marketplace.zh-CN.jpg)](assets/screenshots/plugin-marketplace.zh-CN.jpg) |
+| **模型广场** | **使用日志** |
+| [![模型广场：模拟模型价格与可用状态](assets/screenshots/models.zh-CN.jpg)](assets/screenshots/models.zh-CN.jpg) | [![使用日志：模拟 Token 用量、费用和响应耗时](assets/screenshots/usage-logs.zh-CN.jpg)](assets/screenshots/usage-logs.zh-CN.jpg) |
 
-除代码 hook 外，还扩展了渠道数据模型（`relaykit/dto/channel_settings.go` 的 `audit_enabled` 字段）和前端渠道编辑界面，支持按渠道开启审计。
+---
 
-New-API 会向审计服务发送两类事件：
+## 🤝 我们信任的合作伙伴
 
-```text
-POST /internal/new-api/audit/request
-POST /internal/new-api/audit/usage
-```
+<p align="center">
+  <em>排名不分先后</em>
+</p>
 
-请求带有以下签名头：
+<p align="center">
+  <a href="https://www.cherry-ai.com/" target="_blank">
+    <img src="./docs/images/cherry-studio.png" alt="Cherry Studio" height="80" />
+  </a><!--
+  --><a href="https://github.com/iOfficeAI/AionUi/" target="_blank">
+    <img src="./docs/images/aionui.png" alt="Aion UI" height="80" />
+  </a><!--
+  --><a href="https://bda.pku.edu.cn/" target="_blank">
+    <img src="./docs/images/pku.png" alt="北京大学" height="80" />
+  </a><!--
+  --><a href="https://www.aliyun.com/" target="_blank">
+    <img src="./docs/images/aliyun.png" alt="阿里云" height="80" />
+  </a><!--
+  --><a href="https://io.net/" target="_blank">
+    <img src="./docs/images/io-net.png" alt="IO.NET" height="80" />
+  </a>
+</p>
 
-```text
-X-Audit-Timestamp
-X-Audit-Signature
-```
+---
 
-签名算法：
+## 🙏 特别鸣谢
 
-```text
-hex(hmac_sha256(timestamp + "." + raw_body, AUDIT_SECRET))
-```
+<p align="center">
+  <a href="https://www.jetbrains.com/?from=new-api" target="_blank">
+    <img src="https://resources.jetbrains.com/storage/products/company/brand/logos/jb_beam.png" alt="JetBrains Logo" width="120" />
+  </a>
+</p>
 
-## 渠道级审计开关
+<p align="center">
+  <strong>感谢 <a href="https://www.jetbrains.com/?from=new-api">JetBrains</a> 为本项目提供免费的开源开发许可证</strong>
+</p>
 
-审计支持按渠道开启，默认关闭。在管理后台「渠道管理 → 编辑渠道 → 渠道额外设置」中打开「启用审计」开关即可。上报条件为以下两项同时满足：
+---
 
-- 服务器环境变量 `AUDIT_ENABLED=true`（总闸，`AUDIT_ENDPOINT`/`AUDIT_SECRET` 配置完整）。
-- 该渠道的「启用审计」开关已打开。
+<a id="capabilities"></a>
 
-开关行为细节：
+## 核心能力
 
-- request 事件在渠道选定后上报，归属该请求**首个实际尝试服务的已开启审计渠道**；重试切换渠道不会重复上报。
-- usage 事件按消费日志中的渠道 ID 判断开关（读渠道内存缓存）。
-- token 排除列表（`AUDIT_EXCLUDED_TOKEN_NAMES`）仍然生效，与渠道开关是 AND 关系。
-- 未开启审计的渠道，prompt 内容不会构建、不会离开网关。
-- 多节点部署下，渠道开关修改通过渠道缓存定时同步（`SYNC_FREQUENCY`，默认 60 秒）传播到其他节点。
+| 方向 | 可以做什么 |
+| --- | --- |
+| 模型接入 | 支持 OpenAI Chat Completions、Responses、Anthropic Messages 和 Gemini 协议，以及上游支持的流式输出、工具调用、推理与多模态输入 |
+| 渠道调度 | 配置模型映射、渠道优先级与权重、失败重试、渠道亲和性和多密钥管理 |
+| 用量与成本 | 管理额度、订阅套餐、用量日志、缓存计费，以及基于表达式的阶梯定价 |
+| 访问控制 | 管理用户、分组、细粒度权限和 API Key 限制；支持 OAuth/OIDC、通行密钥、两步验证与登录会话管理 |
+| 异步任务 | 通过 JavaScript 插件扩展图片、视频等任务 API，统一查询任务状态和获取产物 |
+| Web 控制台 | 配置渠道与模型、查看用量和审计日志、在 Playground 中调试模型；支持简体中文、繁体中文、英语、法语、日语、俄语和越南语 |
 
-## 为什么要这样做
+### 协议与接口
 
-New-API 原有日志和数据库适合做用量统计，但不足以完成“工作用途审计”：
+| 接口类型 | 常用入口 |
+| --- | --- |
+| OpenAI Chat / Responses | `POST /v1/chat/completions`、`POST /v1/responses` |
+| Anthropic Messages | `POST /v1/messages` |
+| Gemini | `POST /v1beta/models/{model}:generateContent`、`POST /v1beta/models/{model}:streamGenerateContent` |
+| Realtime / Responses WebSocket | `GET /v1/realtime`、`GET /v1/responses`（WebSocket 升级） |
+| 图片 / 音频 | `/v1/images/generations`、`/v1/images/edits`、`/v1/audio/speech`、`/v1/audio/transcriptions`、`/v1/audio/translations` |
+| 向量 / 重排 | `POST /v1/embeddings`、`POST /v1/rerank` |
+| 任务插件 | `POST /v1/tasks/{pluginKey}`、`GET /v1/tasks/{taskId}`，以及各插件声明的协议路由 |
 
-- `logs` 表能记录用户、token、模型、quota、token 数和 request_id，但不保存 prompt 内容。
-- Docker logs 正则解析不稳定，遇到多节点、日志轮转、格式变化、流式请求时容易丢失或误判。
-- 直接修改 New-API 主业务表会增加升级风险，也会把审计数据和网关业务强耦合。
-- 仅靠 token 数无法判断请求是否真的用于工作，需要 prompt 证据、分类结果和人工复核链路。
+[RelayKit](./relaykit/README.md) 提供上述四种文本协议之间的请求、响应和流式转换。实际可用能力取决于渠道、上游模型和转换路径；协议特有的工具与字段可能无法完整映射。WebSocket 同样需要上游与渠道配置支持。
 
-所以这个 fork 采用“New-API 最小采集 + 独立审计服务处理”的设计：
+本 README 描述当前源码的能力，部署时请同时查看所选版本的发布说明。
 
-- New-API 只负责在稳定位置上报 request / usage 事件。
-- `request_id` 用于关联 prompt 和最终用量。
-- 上报使用异步非阻塞队列，审计服务故障不阻断正常 API 请求。
-- prompt 原文不写入 New-API 主库，由独立审计服务加密保存。
-- 审计服务生产默认使用本机 SQLite 文件库，并按 30 天保留策略清理历史数据，不需要额外部署 MySQL。
-- 分类、报表、复核和推送全部放在 `token-audit` 服务侧演进。
+<a id="quick-start"></a>
 
-## 工作流程
+## 快速开始
 
-```text
-CPA / 客户端
-    |
-    v
-patched New-API
-    | 1. 请求解析后异步上报 request 事件
-    | 2. 消费结算后异步上报 usage 事件
-    v
-token-audit 服务
-    |
-    | request_id 关联 prompt 与 token usage
-    v
-独立审计 SQLite 文件库
-    |
-    v
-分类、报表、人工复核、企业微信推送
-```
+### 使用 Docker 本地体验
 
-New-API 仍然按原来的方式完成鉴权、路由、转发、计费和日志记录。审计上报失败时只记录日志，不影响用户请求。
-
-## 环境变量
-
-这个 fork 新增以下 New-API 环境变量：
-
-| 变量 | 默认值 | 说明 |
-| --- | --- | --- |
-| `AUDIT_ENABLED` | `false` | 是否开启审计上报 |
-| `AUDIT_ENDPOINT` | 空 | 审计服务地址，例如 `http://token-audit:8000` |
-| `AUDIT_SECRET` | 空 | New-API 与审计服务共享的 HMAC 密钥 |
-| `AUDIT_TIMEOUT_MS` | `800` | 单次上报请求超时时间，单位毫秒 |
-| `AUDIT_QUEUE_SIZE` | `1000` | 异步上报队列长度 |
-| `AUDIT_MAX_EVENT_BYTES` | `1048576` | 单个审计事件序列化后的最大字节数；超大 request 事件会省略完整 prompt，仅发送 hash/preview/长度，其他超限事件会被丢弃 |
-| `AUDIT_EXCLUDED_TOKEN_NAMES` | 空 | 逗号分隔的 token 名称排除列表，用于排除审计服务自己的 LLM 分类请求 |
-
-推荐配置：
-
-```env
-AUDIT_ENABLED=true
-AUDIT_ENDPOINT=http://token-audit:8000
-AUDIT_SECRET=replace-with-long-random-secret
-AUDIT_TIMEOUT_MS=800
-AUDIT_QUEUE_SIZE=1000
-AUDIT_MAX_EVENT_BYTES=1048576
-AUDIT_EXCLUDED_TOKEN_NAMES=audit-classifier
-```
-
-## 部署建议
-
-生产环境推荐按以下顺序上线：
-
-1. 先部署独立 `token-audit` 服务，审计库使用本机 SQLite 文件，例如 `/opt/token-audit/data/token_audit.db`。
-2. 构建并部署这个 fork 的 New-API 镜像，但先设置 `AUDIT_ENABLED=false`。
-3. 确认 CPA、New-API、上游模型调用全部正常。
-4. 将 `AUDIT_ENABLED=true`，进入 shadow 上报阶段。
-5. 对比 New-API `logs` 表与审计库中的请求数、token 数和 `request_id` 关联率。
-6. 对账稳定后，再启用分类任务、日报/周报和企业微信推送。
-
-Docker Compose 中 New-API 侧示例：
-
-```yaml
-services:
-  new-api:
-    image: your-registry/new-api-audit:audit-hook
-    environment:
-      AUDIT_ENABLED: "true"
-      AUDIT_ENDPOINT: "http://token-audit:8000"
-      AUDIT_SECRET: "${AUDIT_SECRET}"
-      AUDIT_TIMEOUT_MS: "800"
-      AUDIT_QUEUE_SIZE: "1000"
-      AUDIT_MAX_EVENT_BYTES: "1048576"
-      AUDIT_EXCLUDED_TOKEN_NAMES: "audit-classifier"
-    depends_on:
-      - token-audit
-```
-
-本地构建示例：
+以下命令使用 SQLite 启动单实例，仅监听本机端口：
 
 ```bash
-docker build -t new-api-audit:audit-hook .
+mkdir -p data
+docker run --name new-api -d --restart unless-stopped \
+  -p 127.0.0.1:3000:3000 \
+  -e TZ=Asia/Shanghai \
+  -v "$(pwd)/data:/data" \
+  calciumion/new-api:latest
 ```
 
-## 验证
+打开 [http://localhost:3000](http://localhost:3000)，按初始化向导创建管理员账号。SQLite 数据库存放在挂载的 `data` 目录中，更换容器后仍会保留。
 
-本 fork 已在本地执行过以下验证：
+### 发起第一次请求
+
+1. 新建渠道，填写上游 API Key、可用模型和所属分组，执行渠道测试。
+2. 配置模型价格，确保调用用户有可用额度或有效订阅。
+3. 在控制台创建 API Key，确保它能访问对应分组和模型。
+4. 对于 OpenAI 兼容客户端，将 Base URL 设为 `http://localhost:3000/v1`，密钥使用 **New API 签发的 Key**。
+
+在终端中将 `NEW_API_KEY` 环境变量设为该密钥，查询它可以访问的模型：
 
 ```bash
-gofmt -w audit/sender.go controller/relay.go model/log.go
-git diff --check
-go test ./audit ./model ./controller -run '^$'
+curl --fail-with-body http://localhost:3000/v1/models \
+  -H "Authorization: Bearer ${NEW_API_KEY}"
 ```
 
-说明：
-
-- `-run '^$'` 用于验证受影响包可编译，但不执行仓库既有测试用例。
-- 当前上游 `controller` 的完整测试在本地 SQLite 初始化场景下存在既有失败，不属于审计 hook 编译错误。
-- 上线前建议在 CI 或镜像构建环境里再次执行完整构建验证。
-
-## 隐私与安全
-
-审计数据可能包含敏感 prompt，因此请按内部合规要求部署：
-
-- `AUDIT_ENDPOINT` 建议只暴露在 Docker 内网或内网服务网段，不开放公网。
-- `AUDIT_SECRET` 必须使用高强度随机字符串，并与普通 New-API 配置隔离管理。
-- 完整 prompt 不写入 New-API 主库；应由独立审计服务进行应用层加密存储。
-- 报表默认只展示 prompt preview，完整 prompt 仅允许内部管理员复核时解密查看。
-- 分类服务如果通过 New-API 调用模型，必须使用专用 token，并加入 `AUDIT_EXCLUDED_TOKEN_NAMES`，避免审计请求污染员工用量统计。
-
-## 升级策略
-
-这个 fork 的核心原则是让二开范围足够小，方便持续跟随上游 New-API：
+然后调用 Responses，将 `your-enabled-model` 替换为已启用且支持该接口的模型名称：
 
 ```bash
-git remote add upstream https://github.com/QuantumNous/new-api.git
-git fetch upstream --tags
-
-git switch -c upgrade/upstream-vX.Y.Z
-git merge --no-ff vX.Y.Z
-
-gofmt -w audit/sender.go controller/relay.go model/log.go
-go test ./audit ./model ./controller -run '^$'
-docker build -t new-api-audit:audit-hook .
+curl --fail-with-body http://localhost:3000/v1/responses \
+  -H "Authorization: Bearer ${NEW_API_KEY}" \
+  -H "Content-Type: application/json" \
+  -d '{"model":"your-enabled-model","input":"Hello!"}'
 ```
 
-如果 rebase 冲突，优先检查以下位置：
+<a id="deployment"></a>
 
-- `controller/relay.go` 中请求解析后、敏感词检查和 token 估算附近。
-- `model/log.go` 中 `RecordConsumeLog` 记录消费日志的位置。
-- `common.RequestIdKey` 和 `common.UpstreamRequestIdKey` 是否仍然存在。
+## 部署与运维
 
-## 友情链接
+### Docker Compose
 
-- [LinuxDO](https://linux.do/)：高质量技术社区。
+仓库的 [Compose 配置](./docker-compose.yml) 默认启动 **New API + PostgreSQL + Redis**，并提供 MySQL 和独立 ClickHouse 日志库的配置示例。
 
-## 与上游 New-API 的关系
+```bash
+git clone https://github.com/QuantumNous/new-api.git
+cd new-api
+```
 
-本仓库保留 New-API 的原始能力和许可证，仅增加企业内部审计所需的最小 hook。
+启动前编辑 `docker-compose.yml`：同时替换数据库、Redis 服务及对应连接串中的示例密码，并设置固定的随机 `SESSION_SECRET`（可用 `openssl rand -hex 32` 生成）。通过 HTTPS 访问控制台时，设置 `SESSION_COOKIE_SECURE=true`，并在 `SESSION_COOKIE_TRUSTED_URL` 中填写控制台对外的精确 HTTPS Origin。
 
-当前代码基线为上游 `v1.0.0-rc.39`（分支 `upgrade/upstream-v1.0.0-rc.39`）。New-API 可通过 `LOG_SQL_DSN` 单独使用 ClickHouse 保存网关日志；独立 `token-audit` 服务仍使用自己的 SQLite 审计库，两者职责不同。
+```bash
+docker compose up -d
+docker compose logs -f new-api
+```
 
-原项目文档：
+### 存储与配置
 
-- [New-API 官方文档](https://docs.newapi.pro/zh/docs)
-- [部署指南](https://docs.newapi.pro/zh/docs/installation)
-- [环境变量](https://docs.newapi.pro/zh/docs/installation/config-maintenance/environment-variables)
-- [API 文档](https://docs.newapi.pro/zh/docs/api)
+| 组件 | 可选方案 |
+| --- | --- |
+| 主数据库 | SQLite、MySQL ≥ 5.7.8、PostgreSQL ≥ 9.6 |
+| 独立日志库 | 通过 `LOG_SQL_DSN` 配置，额外支持 ClickHouse |
+| 缓存 | 可选 Redis 与内存缓存；多节点需要共享限流额度时使用共享 Redis |
+| 容器平台 | Linux amd64 / arm64 |
 
-> 使用本项目时仍需遵守上游模型服务条款、New-API 原项目许可证，以及所在司法辖区对生成式人工智能服务、日志留存、隐私保护和数据安全的要求。
+| 环境变量 | 用途 |
+| --- | --- |
+| `SQL_DSN` | 主数据库连接串；未设置时使用 SQLite |
+| `LOG_SQL_DSN` | 可选的独立日志数据库连接串 |
+| `REDIS_CONN_STRING` | Redis 连接串 |
+| `SESSION_SECRET` | 持久保存的鉴权密钥，所有节点必须一致 |
+| `CRYPTO_SECRET` | 默认使用 `SESSION_SECRET`；共享 Redis 的节点必须使用相同的有效值 |
+| `SESSION_COOKIE_SECURE` | HTTPS 控制台设为 `true`，启用 Secure 刷新 Cookie 和严格的刷新／退出来源校验 |
+| `SESSION_COOKIE_TRUSTED_URL` | Secure 模式必填：以逗号分隔的精确 HTTPS Origin，不含路径或通配符；本地 HTTP 模式不设置 |
+| `TRUSTED_PROXIES` | 可信反向代理 IP/CIDR，或 `none`；按实际网络显式配置 |
+
+完整配置见[环境变量示例](./.env.example)、[环境变量文档](https://docs.newapi.ai/zh/docs/installation/config-maintenance/environment-variables)和[鉴权与登录会话说明](./docs/authentication.md)。容器变量应通过 Compose 的 `environment` 或 `env_file` 注入；只复制 `.env.example` 不会自动将变量传入容器。
+
+正式部署时使用 HTTPS，并配置反向代理支持流式响应与 WebSocket 升级。持久化并备份数据库和挂载数据。多节点必须共用主数据库和鉴权密钥；独立 Redis 或内存限流器会按节点分别计数。不同拓扑下的会话传播行为见鉴权文档。
+
+从[发布页](https://github.com/QuantumNous/new-api/releases)选择明确的镜像版本，阅读升级说明并先备份再升级。`latest` 会随发布构建变化；已有实例应按实际版本评估迁移与兼容性。
+
+<a id="development"></a>
+
+## 开发与扩展
+
+后端使用 Go 和 Gin；控制台使用 React 19、TypeScript、Rsbuild、TanStack 与 Tailwind CSS 4。前端依赖和脚本使用 Bun；Go 语言基线见 [go.mod](./go.mod)，容器构建工具链见 [Dockerfile](./Dockerfile)。
+
+后端会嵌入 `web/dist`，首次启动前先构建前端：
+
+```bash
+# 仓库根目录
+cd web
+bun install --frozen-lockfile
+bun run build
+cd ..
+go run .
+```
+
+在另一个终端启动前端开发服务器：
+
+```bash
+cd web
+bun run dev -- --port 5173
+```
+
+访问 [http://localhost:5173](http://localhost:5173)，开发服务器会将 API 请求代理到 3000 端口的后端。需要容器化开发后端时，参阅 [docker-compose.dev.yml](./docker-compose.dev.yml) 和 [makefile](./makefile) 中的 `make dev`。
+
+| 目录 | 职责 |
+| --- | --- |
+| `router/`、`middleware/`、`controller/` | HTTP 路由、访问校验与 API 处理 |
+| `relay/` | 上游适配与请求调度 |
+| `service/`、`model/` | 业务逻辑与持久化 |
+| [relaykit/](./relaykit/README.md) | 可独立构建的协议 DTO 与转换 Go 模块 |
+| [plugins/tasks/](./plugins/tasks/) | JavaScript 任务插件；编写方式与宿主边界见 [Task Plugin API v1](./docs/plugin-api/v1.md) |
+| `web/` | Web 控制台，参阅[前端开发约定](./web/AGENTS.md) |
+| [electron/](./electron/README.md) | 桌面封装与打包 |
+
+贡献前请阅读 [AGENTS.md](./AGENTS.md)。按改动范围执行检查：Go 模块使用 `make test`；前端在 `web/` 下运行 `bun run typecheck`、`bun run lint`、`bun run test` 和 `bun run build`。修改 RelayKit 后还必须在 `relaykit/` 下执行 `GOWORK=off go build ./...`。
+
+<a id="documentation"></a>
+
+## 文档与社区
+
+| 资源 | 入口 |
+| --- | --- |
+| 官方文档 | [使用指南](https://docs.newapi.ai/zh/docs) · [安装部署](https://docs.newapi.ai/zh/docs/installation) · [API 参考](https://docs.newapi.ai/zh/docs/api) |
+| 项目导读 | [DeepWiki](https://deepwiki.com/QuantumNous/new-api) |
+| 使用问题与交流 | [常见问题](https://docs.newapi.ai/zh/docs/support/faq) · [社区渠道](https://docs.newapi.ai/zh/docs/support/community-interaction) |
+| 缺陷与功能建议 | [GitHub Issues](https://github.com/QuantumNous/new-api/issues) |
+| 安全漏洞 | 按[安全政策](./.github/SECURITY.md)进行私下报告 |
+
+反馈问题时请附上版本、部署方式、复现步骤及脱敏日志。欢迎贡献文档、翻译、渠道适配和有针对性的回归测试。
+
+---
+
+## 🔗 相关项目
+
+### 上游项目
+
+| 项目 | 说明 |
+|------|------|
+| [One API](https://github.com/songquanpeng/one-api) | 原版项目基础 |
+| [Midjourney-Proxy](https://github.com/novicezk/midjourney-proxy) | Midjourney 接口支持 |
+
+### 配套工具
+
+| 项目 | 说明 |
+|------|------|
+| [new-api-key-tool](https://github.com/Calcium-Ion/new-api-key-tool) | Key 额度查询工具 |
+| [new-api-horizon](https://github.com/Calcium-Ion/new-api-horizon) | New API 高性能优化版 |
+
+---
+
+## 📜 许可证
+
+本项目采用 [GNU Affero 通用公共许可证 v3.0 (AGPLv3)](./LICENSE) 授权。
+
+根据 AGPLv3 第 7 条，本项目还适用[附加条款](./NOTICE)。修改版本必须在适当法律声明及界面中显著的关于、法律、页脚或署名位置保留作者署名 `Frontend design and development by New API contributors.`，并保留指向原项目 <https://github.com/QuantumNous/new-api> 的可见链接。
+
+本项目为开源项目，在 [One API](https://github.com/songquanpeng/one-api)（MIT 许可证）的基础上进行二次开发。
+
+如果您所在的组织政策不允许使用 AGPLv3 许可的软件，或您希望规避 AGPLv3 的开源义务，请发送邮件至：[support@quantumnous.com](mailto:support@quantumnous.com)
+
+署名及依赖声明见 [NOTICE](./NOTICE) 和[第三方许可证](./THIRD-PARTY-LICENSES.md)。
+
+---
+
+## 🌟 Star History
+
+<div align="center">
+
+[![Star History Chart](https://api.star-history.com/svg?repos=Calcium-Ion/new-api&type=Date)](https://star-history.com/#Calcium-Ion/new-api&Date)
+
+</div>
+
+---
+
+<div align="center">
+
+### 💖 感谢使用 New API
+
+如果这个项目对你有帮助，欢迎给我们一个 ⭐️ Star！
+
+**[官方文档](https://docs.newapi.ai/zh/docs)** • **[问题反馈](https://github.com/Calcium-Ion/new-api/issues)** • **[最新发布](https://github.com/Calcium-Ion/new-api/releases)**
+
+<sub>Built with ❤️ by QuantumNous</sub>
+
+</div>

@@ -182,7 +182,8 @@ func StreamResponseOpenAI2Claude(openAIResponse *dto.ChatCompletionsStreamRespon
 			})
 		}
 	}
-	if info.GetSendResponseCount() == 1 {
+	if !state.MessageStartSent {
+		state.MessageStartSent = true
 		// Client-visible Claude stream usage matches billing merge: first
 		// frame records first, a later non-zero field overrides, and a later
 		// zero/missing field never erases a first-frame positive. Anthropic
@@ -241,9 +242,6 @@ func StreamResponseOpenAI2Claude(openAIResponse *dto.ChatCompletionsStreamRespon
 			state.FinishReason = *chosenChoice.FinishReason
 		}
 
-		var claudeResponse dto.ClaudeResponse
-		var isEmpty bool
-		claudeResponse.Type = "content_block_delta"
 		if len(chosenChoice.Delta.ToolCalls) > 0 {
 			toolCalls := chosenChoice.Delta.ToolCalls
 			if state.LastMessagesType != convmeta.LastMessageTypeTools {
@@ -339,55 +337,58 @@ func StreamResponseOpenAI2Claude(openAIResponse *dto.ChatCompletionsStreamRespon
 				state.Index = state.ToolCallBaseIndex + len(state.ToolCalls) - 1
 			}
 		} else {
+			// Some upstreams put the last reasoning token and the first answer
+			// text in one chunk: the thinking block closes before the text block opens.
 			reasoning := chosenChoice.Delta.GetReasoningContent()
 			textContent := chosenChoice.Delta.GetContentString()
-			if reasoning != "" || textContent != "" {
-				if reasoning != "" {
-					if state.LastMessagesType != convmeta.LastMessageTypeThinking {
-						stopOpenBlocksAndAdvance()
-						idx := state.Index
-						claudeResponses = append(claudeResponses, &dto.ClaudeResponse{
-							Index: &idx,
-							Type:  "content_block_start",
-							ContentBlock: &dto.ClaudeMediaMessage{
-								Type:     "thinking",
-								Thinking: kitutil.GetPointer[string](""),
-							},
-						})
-					}
-					state.LastMessagesType = convmeta.LastMessageTypeThinking
-					claudeResponse.Delta = &dto.ClaudeMediaMessage{
+			if reasoning != "" {
+				if state.LastMessagesType != convmeta.LastMessageTypeThinking {
+					stopOpenBlocksAndAdvance()
+					idx := state.Index
+					claudeResponses = append(claudeResponses, &dto.ClaudeResponse{
+						Index: &idx,
+						Type:  "content_block_start",
+						ContentBlock: &dto.ClaudeMediaMessage{
+							Type:     "thinking",
+							Thinking: kitutil.GetPointer[string](""),
+						},
+					})
+				}
+				state.LastMessagesType = convmeta.LastMessageTypeThinking
+				claudeResponses = append(claudeResponses, &dto.ClaudeResponse{
+					Index: kitutil.GetPointer[int](state.Index),
+					Type:  "content_block_delta",
+					Delta: &dto.ClaudeMediaMessage{
 						Type:     "thinking_delta",
 						Thinking: &reasoning,
-					}
-				} else {
-					if state.LastMessagesType != convmeta.LastMessageTypeText {
-						stopOpenBlocksAndAdvance()
-						idx := state.Index
-						claudeResponses = append(claudeResponses, &dto.ClaudeResponse{
-							Index: &idx,
-							Type:  "content_block_start",
-							ContentBlock: &dto.ClaudeMediaMessage{
-								Type: "text",
-								Text: kitutil.GetPointer[string](""),
-							},
-						})
-					}
-					state.LastMessagesType = convmeta.LastMessageTypeText
-					claudeResponse.Delta = &dto.ClaudeMediaMessage{
+					},
+				})
+			}
+			if textContent != "" {
+				if state.LastMessagesType != convmeta.LastMessageTypeText {
+					stopOpenBlocksAndAdvance()
+					idx := state.Index
+					claudeResponses = append(claudeResponses, &dto.ClaudeResponse{
+						Index: &idx,
+						Type:  "content_block_start",
+						ContentBlock: &dto.ClaudeMediaMessage{
+							Type: "text",
+							Text: kitutil.GetPointer[string](""),
+						},
+					})
+				}
+				state.LastMessagesType = convmeta.LastMessageTypeText
+				claudeResponses = append(claudeResponses, &dto.ClaudeResponse{
+					Index: kitutil.GetPointer[int](state.Index),
+					Type:  "content_block_delta",
+					Delta: &dto.ClaudeMediaMessage{
 						Type: "text_delta",
 						Text: kitutil.GetPointer[string](textContent),
-					}
-				}
-			} else {
-				isEmpty = true
+					},
+				})
 			}
 		}
 
-		claudeResponse.Index = kitutil.GetPointer[int](state.Index)
-		if !isEmpty && claudeResponse.Delta != nil {
-			claudeResponses = append(claudeResponses, &claudeResponse)
-		}
 		appendCitationDeltas(chosenChoice.Delta.Annotations)
 
 		if doneChunk || state.Done {
@@ -447,7 +448,9 @@ func FinalizeStreamResponseOpenAI2Claude(info convmeta.Meta) []*dto.ClaudeRespon
 }
 
 func ResponseOpenAI2Claude(openAIResponse *dto.OpenAITextResponse, info convmeta.Meta) *dto.ClaudeResponse {
-	var stopReason string
+	// Claude requires a terminal stop_reason; end_turn is the neutral
+	// fallback when the response carries no choices at all.
+	stopReason := "end_turn"
 	contents := make([]dto.ClaudeMediaMessage, 0)
 	claudeResponse := &dto.ClaudeResponse{
 		Id:    openAIResponse.Id,
@@ -455,7 +458,10 @@ func ResponseOpenAI2Claude(openAIResponse *dto.OpenAITextResponse, info convmeta
 		Role:  "assistant",
 		Model: openAIResponse.Model,
 	}
-	for _, choice := range openAIResponse.Choices {
+	// Only the first choice converts: Claude messages have no candidate
+	// list, and concatenating choices would interleave unrelated content.
+	if len(openAIResponse.Choices) > 0 {
+		choice := openAIResponse.Choices[0]
 		stopReason = stopReasonOpenAI2Claude(choice.FinishReason)
 		reasoningContent := choice.Message.GetReasoningContent()
 		textContent := choice.Message.StringContent()
