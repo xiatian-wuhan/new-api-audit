@@ -415,6 +415,10 @@ func RecordConsumeLog(c *gin.Context, userId int, params RecordConsumeLogParams)
 
 func enqueueAuditUsage(c *gin.Context, userId int, params RecordConsumeLogParams) {
 	// audit hook: only report usage for channels with the audit switch on.
+	// DB can be nil in unit tests; the hook must never break billing paths.
+	if DB == nil {
+		return
+	}
 	if channel, err := CacheGetChannel(params.ChannelId); err != nil || !channel.GetSetting().AuditEnabled {
 		return
 	}

@@ -535,4 +535,3 @@ func TestOpenAIChatRequestToClaudeMessages_TextFileBecomesTextDocument(t *testin
 	require.Equal(t, content, blocks[0].Source.Data)
 	require.Nil(t, blocks[0].Text)
 }
-}
