@@ -6300,6 +6300,8 @@
     "Thinking to Content": "思维到内容",
     "Audit Enabled": "启用审计",
     "Report requests and token usage of this channel to the token-audit service": "将该渠道的请求与 Token 用量上报给 token-audit 审计服务",
+    "Merge Mid-conversation System Messages": "合并对话中部的系统消息",
+    "Fold system messages that appear mid-conversation into the leading system message. Enable for strict upstreams, such as vLLM serving Qwen models, that reject them.": "把出现在对话中部的系统消息合并进首条系统消息。适用于严格校验的上游(如 vLLM 部署的 Qwen 系列模型)。",
     "Thinking...": "思考中...",
     "Third-party": "第三方",
     "Third-party — use at your own risk": "第三方 — 风险自担",

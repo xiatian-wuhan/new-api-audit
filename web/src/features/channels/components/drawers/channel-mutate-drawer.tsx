@@ -1951,6 +1951,32 @@ export function ChannelMutateDrawer({
     />
   )
 
+  const mergeSystemMessagesFields = (
+    <FormField
+      control={form.control}
+      name='merge_system_messages'
+      render={({ field }) => (
+        <FormItem className='flex items-center justify-between px-4 py-3'>
+          <div className='space-y-0.5'>
+            <FormLabel>{t('Merge Mid-conversation System Messages')}</FormLabel>
+            <FormDescription>
+              {t(
+                'Fold system messages that appear mid-conversation into the leading system message. Enable for strict upstreams, such as vLLM serving Qwen models, that reject them.'
+              )}
+            </FormDescription>
+          </div>
+          <FormControl>
+            <Switch
+              disabled={sensitiveLocked}
+              checked={field.value}
+              onCheckedChange={field.onChange}
+            />
+          </FormControl>
+        </FormItem>
+      )}
+    />
+  )
+
   const taskPollingFields = (
     <FormField
       control={form.control}
@@ -4818,6 +4844,7 @@ export function ChannelMutateDrawer({
                 {httpShardsFields}
                 {tlsInsecureSkipVerifyFields}
                 {auditFields}
+                {mergeSystemMessagesFields}
               </fieldset>
             </div>
             {upstreamModelDetectionFields}

@@ -730,6 +730,78 @@ func (m *Message) IsStringContent() bool {
 	return false
 }
 
+// MergeMidConversationSystemMessages folds system/developer messages that
+// appear after the first non-system message into the leading system message.
+// Strict upstream chat templates (e.g. vLLM serving Qwen models) reject
+// mid-conversation system messages with "System message must be at the
+// beginning". When no leading system message exists, the first mid-list one
+// is promoted to the front and the rest fold into it. Only text parts are
+// folded; every other message is left untouched.
+func (r *GeneralOpenAIRequest) MergeMidConversationSystemMessages() {
+	if r == nil || len(r.Messages) < 2 {
+		return
+	}
+	isSystemRole := func(role string) bool {
+		return role == "system" || role == "developer"
+	}
+	leading := 0
+	for leading < len(r.Messages) && isSystemRole(r.Messages[leading].Role) {
+		leading++
+	}
+	if leading == len(r.Messages) {
+		return
+	}
+	folded := make([]string, 0, 2)
+	for i := leading; i < len(r.Messages); i++ {
+		if !isSystemRole(r.Messages[i].Role) {
+			continue
+		}
+		if text := systemMessageText(r.Messages[i]); text != "" {
+			folded = append(folded, text)
+		}
+	}
+	if len(folded) == 0 {
+		return
+	}
+	joined := strings.Join(folded, "\n\n")
+	out := make([]Message, 0, len(r.Messages))
+	if leading == 0 {
+		var anchor Message
+		anchor.Role = "system"
+		anchor.SetStringContent(joined)
+		out = append(out, anchor)
+	}
+	for i, msg := range r.Messages {
+		if i >= leading && isSystemRole(msg.Role) {
+			continue
+		}
+		if leading > 0 && i == leading-1 {
+			merged := strings.TrimSpace(msg.StringContent())
+			if merged != "" {
+				merged += "\n\n"
+			}
+			merged += joined
+			msg.SetStringContent(merged)
+		}
+		out = append(out, msg)
+	}
+	r.Messages = out
+}
+
+func systemMessageText(msg Message) string {
+	if msg.IsStringContent() {
+		return strings.TrimSpace(msg.StringContent())
+	}
+	parts := msg.ParseContent()
+	texts := make([]string, 0, len(parts))
+	for _, part := range parts {
+		if part.Type == ContentTypeText && strings.TrimSpace(part.Text) != "" {
+			texts = append(texts, strings.TrimSpace(part.Text))
+		}
+	}
+	return strings.Join(texts, "\n\n")
+}
+
 func (m *Message) ParseContent() []MediaContent {
 	if m.Content == nil {
 		return nil
@@ -737,7 +809,6 @@ func (m *Message) ParseContent() []MediaContent {
 	if len(m.parsedContent) > 0 {
 		return m.parsedContent
 	}
-
 	var contentList []MediaContent
 	// 先尝试解析为字符串
 	content, ok := m.Content.(string)

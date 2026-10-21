@@ -6300,6 +6300,8 @@
     "Thinking to Content": "Réflexion vers Contenu",
     "Audit Enabled": "Audit activé",
     "Report requests and token usage of this channel to the token-audit service": "Signaler les requêtes et l'utilisation de tokens de ce canal au service d'audit token-audit",
+    "Merge Mid-conversation System Messages": "Fusionner les messages système en cours de conversation",
+    "Fold system messages that appear mid-conversation into the leading system message. Enable for strict upstreams, such as vLLM serving Qwen models, that reject them.": "Regroupe les messages système apparaissant en cours de conversation dans le premier message système. Pour les upstream stricts, comme Qwen servi par vLLM.",
     "Thinking...": "Réflexion...",
     "Third-party": "Tiers",
     "Third-party — use at your own risk": "Tiers — à vos risques et périls",

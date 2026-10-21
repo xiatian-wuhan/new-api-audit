@@ -6300,6 +6300,8 @@
     "Thinking to Content": "Мышление в контент",
     "Audit Enabled": "Аудит включён",
     "Report requests and token usage of this channel to the token-audit service": "Отправлять запросы и расход токенов этого канала в сервис аудита token-audit",
+    "Merge Mid-conversation System Messages": "Объединять системные сообщения в середине диалога",
+    "Fold system messages that appear mid-conversation into the leading system message. Enable for strict upstreams, such as vLLM serving Qwen models, that reject them.": "Объединяет системные сообщения, появляющиеся в середине диалога, с первым системным сообщением. Для строгих upstream, таких как Qwen на vLLM.",
     "Thinking...": "Размышление...",
     "Third-party": "Сторонний",
     "Third-party — use at your own risk": "Сторонний — на ваш риск",

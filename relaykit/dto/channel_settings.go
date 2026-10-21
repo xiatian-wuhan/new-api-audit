@@ -40,6 +40,11 @@ type ChannelSettings struct {
 	// TLSInsecureSkipVerify accepts upstream certificates that fail
 	// verification, such as self-signed ones, for this channel only.
 	TLSInsecureSkipVerify bool `json:"tls_insecure_skip_verify,omitempty"`
+	// MergeSystemMessages folds system/developer messages that appear after the
+	// first non-system message into the leading system message. Strict upstream
+	// chat templates (e.g. vLLM serving Qwen models) reject mid-conversation
+	// system messages. Defaults to false.
+	MergeSystemMessages bool `json:"merge_system_messages,omitempty"`
 }
 
 // BindsTaskPlugin reports whether the channel is bound to the task plugin,

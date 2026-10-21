@@ -6300,6 +6300,8 @@
     "Thinking to Content": "Suy nghĩ thành Nội dung",
     "Audit Enabled": "Bật kiểm toán",
     "Report requests and token usage of this channel to the token-audit service": "Báo cáo yêu cầu và mức sử dụng token của kênh này đến dịch vụ kiểm toán token-audit",
+    "Merge Mid-conversation System Messages": "Gộp tin nhắn hệ thống ở giữa hội thoại",
+    "Fold system messages that appear mid-conversation into the leading system message. Enable for strict upstreams, such as vLLM serving Qwen models, that reject them.": "Gộp các tin nhắn hệ thống xuất hiện giữa hội thoại vào tin nhắn hệ thống đầu tiên. Dành cho upstream nghiêm ngặt như mô hình Qwen trên vLLM.",
     "Thinking...": "Đang suy nghĩ...",
     "Third-party": "Bên thứ ba",
     "Third-party — use at your own risk": "Bên thứ ba — tự chịu rủi ro",

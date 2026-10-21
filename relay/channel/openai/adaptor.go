@@ -439,6 +439,9 @@ func (a *Adaptor) ConvertOpenAIRequest(c *gin.Context, info *relaycommon.RelayIn
 	if capabilities.UseDeveloperRole && len(request.Messages) > 0 && request.Messages[0].Role == "system" {
 		request.Messages[0].Role = "developer"
 	}
+	if info.ChannelSetting.MergeSystemMessages {
+		request.MergeMidConversationSystemMessages()
+	}
 
 	return request, nil
 }

@@ -87,6 +87,7 @@ const CONFIGURATION_BLOCKS = {
       'tls_insecure_skip_verify',
       'disable_task_polling_sleep',
       'audit_enabled',
+      'merge_system_messages',
     ],
   },
   upstreamModelDetection: {
@@ -179,7 +180,8 @@ export function getChannelConfigurationState(
       (values.http2_connection_shards ?? 1) > 1 ||
       values.tls_insecure_skip_verify ||
       values.disable_task_polling_sleep ||
-      values.audit_enabled
+      values.audit_enabled ||
+      values.merge_system_messages
     ),
     upstreamModelDetection:
       MODEL_FETCHABLE_TYPES.has(values.type) &&
